@@ -3,22 +3,14 @@ import 'package:web_dashboard/core/widgets/custom_text.dart';
 import 'package:web_dashboard/core/widgets/size_config.dart';
 import 'package:web_dashboard/core/theme/app_colors.dart';
 
-class LiveMonitorChart extends StatelessWidget {
+class TemperatureChart extends StatelessWidget {
   final List<double> dataPoints;
   final List<String> labels;
-  final String selectedDate;
-  final String selectedKPI;
-  final Function(String)? onDateChanged;
-  final Function(String)? onKPIChanged;
 
-  const LiveMonitorChart({
+  const TemperatureChart({
     super.key,
     required this.dataPoints,
     required this.labels,
-    required this.selectedDate,
-    required this.selectedKPI,
-    this.onDateChanged,
-    this.onKPIChanged,
   });
 
   @override
@@ -33,9 +25,9 @@ class LiveMonitorChart extends StatelessWidget {
         color: AppColors.white,
         borderRadius: BorderRadius.circular(
           SizeConfig.getResponsiveBorderRadius(
-            mobile: 2,
-            tablet: 2.5,
-            desktop: 3,
+            mobile: 1,
+            tablet: 1.2,
+            desktop: 1.5,
           ),
         ),
         boxShadow: [
@@ -50,136 +42,28 @@ class LiveMonitorChart extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Flexible(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CustomText(
-                      'Live Monitor',
-                      fontSize: SizeConfig.responsive(mobile: 16, tablet: 18, desktop: 20),
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.black,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    SizedBox(height: SizeConfig.scaleHeight(0.3)),
-                    CustomText(
-                      'time progress',
-                      fontSize: SizeConfig.responsive(mobile: 12, tablet: 13, desktop: 14),
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.grey500,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-              Flexible(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Flexible(
-                      child: _buildDropdown(
-                        'DATE',
-                        selectedDate,
-                        ['Today', 'Yesterday', 'Last Week'],
-                        onDateChanged,
-                      ),
-                    ),
-                    SizedBox(width: SizeConfig.scaleWidth(1)),
-                    Flexible(
-                      child: _buildDropdown(
-                        'Select KPI',
-                        selectedKPI,
-                        ['Soil Moisture', 'Temperature', 'pH Level'],
-                        onKPIChanged,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+          CustomText(
+            'Temperature Changes',
+            fontSize: SizeConfig.responsive(mobile: 16, tablet: 18, desktop: 20),
+            fontWeight: FontWeight.bold,
+            color: AppColors.black,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          SizedBox(height: SizeConfig.scaleHeight(0.3)),
+          CustomText(
+            'time progress',
+            fontSize: SizeConfig.responsive(mobile: 12, tablet: 13, desktop: 14),
+            fontWeight: FontWeight.w500,
+            color: AppColors.primary,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
           SizedBox(height: SizeConfig.scaleHeight(2)),
           Flexible(
             child: _buildChart(context),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildDropdown(
-    String label,
-    String value,
-    List<String> items,
-    Function(String)? onChanged,
-  ) {
-    return ConstrainedBox(
-      constraints: BoxConstraints(
-        minWidth: SizeConfig.responsive(mobile: 80, tablet: 100, desktop: 120),
-        maxWidth: SizeConfig.responsive(mobile: 150, tablet: 180, desktop: 200),
-      ),
-      child: Container(
-        padding: EdgeInsets.symmetric(
-          horizontal: SizeConfig.responsive(mobile: 1, tablet: 1.2, desktop: 1.5),
-          vertical: SizeConfig.responsive(mobile: 0.5, tablet: 0.6, desktop: 0.8),
-        ),
-        decoration: BoxDecoration(
-          color: AppColors.grey100,
-          borderRadius: BorderRadius.circular(
-            SizeConfig.getResponsiveBorderRadius(mobile: 1),
-          ),
-          border: Border.all(color: AppColors.grey300, width: 1),
-        ),
-        child: DropdownButton<String>(
-          value: value,
-          underline: const SizedBox(),
-          isDense: true,
-          isExpanded: true,
-          icon: Icon(
-            Icons.arrow_drop_down,
-            color: AppColors.grey600,
-            size: SizeConfig.responsive(mobile: 20, tablet: 22, desktop: 24),
-          ),
-          iconSize: SizeConfig.responsive(mobile: 20, tablet: 22, desktop: 24),
-          items: items.map((String item) {
-            return DropdownMenuItem<String>(
-              value: item,
-              child: CustomText(
-                item,
-                fontSize: SizeConfig.responsive(mobile: 10, tablet: 11, desktop: 12),
-                color: AppColors.black,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            );
-          }).toList(),
-          selectedItemBuilder: (BuildContext context) {
-            return items.map((String item) {
-              return Align(
-                alignment: Alignment.centerLeft,
-                child: CustomText(
-                  item == value ? item : '',
-                  fontSize: SizeConfig.responsive(mobile: 10, tablet: 11, desktop: 12),
-                  color: AppColors.black,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              );
-            }).toList();
-          },
-          onChanged: (String? newValue) {
-            if (newValue != null && onChanged != null) {
-              onChanged(newValue);
-            }
-          },
-        ),
       ),
     );
   }
@@ -211,7 +95,7 @@ class LiveMonitorChart extends StatelessWidget {
             minValue: 0,
             isMobile: isMobile,
             isTablet: isTablet,
-            lineColor: AppColors.weatherTertiary,
+            lineColor: AppColors.primary,
           ),
         );
       },

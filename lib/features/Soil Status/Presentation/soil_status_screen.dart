@@ -122,7 +122,7 @@ class _SoilStatusScreenState extends State<SoilStatusScreen> {
                 child: _buildMetricCardsTablet(),
               ),
               SizedBox(width: SizeConfig.scaleWidth(2)),
-              Expanded(
+              Flexible(
                 flex: 1,
                 child: SoilHealthScore(score: 66, status: 'medium'),
               ),
@@ -177,7 +177,7 @@ class _SoilStatusScreenState extends State<SoilStatusScreen> {
                 child: _buildMetricCardsDesktop(),
               ),
               SizedBox(width: SizeConfig.scaleWidth(3)),
-              Expanded(
+              Flexible(
                 flex: 1,
                 child: SoilHealthScore(score: 66, status: 'medium'),
               ),
@@ -206,6 +206,7 @@ class _SoilStatusScreenState extends State<SoilStatusScreen> {
 
   Widget _buildMetricCardsMobile() {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         Row(
           children: [
@@ -223,7 +224,7 @@ class _SoilStatusScreenState extends State<SoilStatusScreen> {
                 ),
               ),
             ),
-            SizedBox(width: SizeConfig.scaleWidth(1.5)),
+            SizedBox(width: SizeConfig.scaleWidth(1)),
             Expanded(
               child: ConstrainedBox(
                 constraints: BoxConstraints(
@@ -238,7 +239,7 @@ class _SoilStatusScreenState extends State<SoilStatusScreen> {
                 ),
               ),
             ),
-            SizedBox(width: SizeConfig.scaleWidth(1.5)),
+            SizedBox(width: SizeConfig.scaleWidth(1)),
             Expanded(
               child: ConstrainedBox(
                 constraints: BoxConstraints(
@@ -247,7 +248,7 @@ class _SoilStatusScreenState extends State<SoilStatusScreen> {
                 ),
                 child: SoilMetricCard(
                   title: 'Ph level',
-                  value: '55% to the max',
+                  value: '5.5',
                   backgroundColor: AppColors.weatherTertiary,
                   icon: AppAssets.phLevel,
                 ),
@@ -266,13 +267,13 @@ class _SoilStatusScreenState extends State<SoilStatusScreen> {
                 ),
                 child: SoilMetricCard(
                   title: 'Electrical Conductivity',
-                  value: '55% to the max',
+                  value: '15-25 °C',
                   backgroundColor: AppColors.weatherQuaternary,
                   icon: AppAssets.electricalConductivity,
                 ),
               ),
             ),
-            SizedBox(width: SizeConfig.scaleWidth(1.5)),
+            SizedBox(width: SizeConfig.scaleWidth(1)),
             Expanded(
               child: ConstrainedBox(
                 constraints: BoxConstraints(
@@ -281,13 +282,13 @@ class _SoilStatusScreenState extends State<SoilStatusScreen> {
                 ),
                 child: SoilMetricCard(
                   title: 'Organic Matter',
-                  value: '55% to the max',
+                  value: '1.5%',
                   backgroundColor: AppColors.weatherQuinary,
                   icon: AppAssets.organicMatter,
                 ),
               ),
             ),
-            SizedBox(width: SizeConfig.scaleWidth(1.5)),
+            SizedBox(width: SizeConfig.scaleWidth(1)),
             Expanded(
               child: ConstrainedBox(
                 constraints: BoxConstraints(
@@ -296,7 +297,7 @@ class _SoilStatusScreenState extends State<SoilStatusScreen> {
                 ),
                 child: SoilMetricCard(
                   title: 'nitrite',
-                  value: '55% to the max',
+                  value: '0.5 mg/L',
                   backgroundColor: AppColors.weatherSenary,
                   icon: AppAssets.nitrite,
                 ),
@@ -321,7 +322,7 @@ class _SoilStatusScreenState extends State<SoilStatusScreen> {
                 ),
                 child: SoilMetricCard(
                   title: 'Soil Moisture (%)',
-                  value: '55% to the max',
+                  value: '55%',
                   backgroundColor: AppColors.weatherPrimary,
                   icon: AppAssets.soilMoisture,
                 ),
@@ -336,7 +337,7 @@ class _SoilStatusScreenState extends State<SoilStatusScreen> {
                 ),
                 child: SoilMetricCard(
                   title: 'Soil Temperature',
-                  value: '55% to the max',
+                  value: '25 °C',
                   backgroundColor: AppColors.weatherSecondary,
                   icon: AppAssets.soilTemperature,
                 ),
@@ -351,7 +352,7 @@ class _SoilStatusScreenState extends State<SoilStatusScreen> {
                 ),
                 child: SoilMetricCard(
                   title: 'Ph level',
-                  value: '55% to the max',
+                  value: '5.5',
                   backgroundColor: AppColors.weatherTertiary,
                   icon: AppAssets.phLevel,
                 ),
@@ -370,7 +371,7 @@ class _SoilStatusScreenState extends State<SoilStatusScreen> {
                 ),
                 child: SoilMetricCard(
                   title: 'Electrical Conductivity',
-                  value: '55% to the max',
+                  value: '15-25 °C',
                   backgroundColor: AppColors.weatherQuaternary,
                   icon: AppAssets.electricalConductivity,
                 ),
@@ -385,7 +386,7 @@ class _SoilStatusScreenState extends State<SoilStatusScreen> {
                 ),
                 child: SoilMetricCard(
                   title: 'Organic Matter',
-                  value: '55% to the max',
+                  value: '1.5%',
                   backgroundColor: AppColors.weatherQuinary,
                   icon: AppAssets.organicMatter,
                 ),
@@ -400,7 +401,7 @@ class _SoilStatusScreenState extends State<SoilStatusScreen> {
                 ),
                 child: SoilMetricCard(
                   title: 'nitrite',
-                  value: '55% to the max',
+                  value: '0.5 mg/L',
                   backgroundColor: AppColors.weatherSenary,
                   icon: AppAssets.nitrite,
                 ),
@@ -425,7 +426,7 @@ class _SoilStatusScreenState extends State<SoilStatusScreen> {
                 ),
                 child: SoilMetricCard(
                   title: 'Soil Moisture (%)',
-                  value: '55% to the max',
+                  value: '55%',
                   backgroundColor: AppColors.weatherPrimary,
                   icon: AppAssets.soilMoisture,
                 ),
@@ -440,7 +441,7 @@ class _SoilStatusScreenState extends State<SoilStatusScreen> {
                 ),
                 child: SoilMetricCard(
                   title: 'Soil Temperature',
-                  value: '55% to the max',
+                  value: '25 °C',
                   backgroundColor: AppColors.weatherSecondary,
                   icon: AppAssets.soilTemperature,
                 ),
@@ -455,7 +456,7 @@ class _SoilStatusScreenState extends State<SoilStatusScreen> {
                 ),
                 child: SoilMetricCard(
                   title: 'Ph level',
-                  value: '55% to the max',
+                  value: '5.5',
                   backgroundColor: AppColors.weatherTertiary,
                   icon: AppAssets.phLevel,
                 ),
@@ -474,7 +475,7 @@ class _SoilStatusScreenState extends State<SoilStatusScreen> {
                 ),
                 child: SoilMetricCard(
                   title: 'Electrical Conductivity',
-                  value: '55% to the max',
+                  value: '15-25 °C',
                   backgroundColor: AppColors.weatherQuaternary,
                   icon: AppAssets.electricalConductivity,
                 ),
@@ -489,7 +490,7 @@ class _SoilStatusScreenState extends State<SoilStatusScreen> {
                 ),
                 child: SoilMetricCard(
                   title: 'Organic Matter',
-                  value: '55% to the max',
+                  value: '1.5%',
                   backgroundColor: AppColors.weatherQuinary,
                   icon: AppAssets.organicMatter,
                 ),
@@ -504,7 +505,7 @@ class _SoilStatusScreenState extends State<SoilStatusScreen> {
                 ),
                 child: SoilMetricCard(
                   title: 'nitrite',
-                  value: '55% to the max',
+                  value: '55%',
                   backgroundColor: AppColors.weatherSenary,
                   icon: AppAssets.nitrite,
                 ),

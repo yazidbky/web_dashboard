@@ -32,5 +32,14 @@ static const String electricalConductivity = 'assets/elec_conductivity.png';
 static const String organicMatter = 'assets/organic_matter.png';
 static const String nitrite = 'assets/nitrite.png';
 
+// weather assets
+
+static const String heavyRain = 'assets/heavy_rain.png';
+static const String humidity = 'assets/humidity.png';
+static const String lightning = 'assets/lightning.png';
+static const String windy = 'assets/windy.png';
+static const String sunny = 'assets/sunny.png';
+static const String sunCloudy = 'assets/sun_cloudy.png';
+
 
 }

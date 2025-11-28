@@ -24,13 +24,7 @@ class SoilHealthScore extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: AppColors.white,
-        borderRadius: BorderRadius.circular(
-          SizeConfig.getResponsiveBorderRadius(
-            mobile: 2,
-            tablet: 2.5,
-            desktop: 3,
-          ),
-        ),
+        borderRadius: BorderRadius.zero,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -49,29 +43,33 @@ class SoilHealthScore extends StatelessWidget {
             color: AppColors.black,
           ),
           SizedBox(height: SizeConfig.scaleHeight(2)),
-          SizedBox(
-            height: SizeConfig.scaleHeight(20),
-            width: SizeConfig.scaleWidth(40),
-            child: CustomPaint(
-              painter: _SemiCircleGaugePainter(
-                score: score,
-                isMobile: SizeConfig.isMobile,
-                isTablet: SizeConfig.isTablet,
-              ),
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    CustomText(
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final gaugeSize = SizeConfig.responsive(
+                mobile: math.min(constraints.maxWidth * 0.8, SizeConfig.scaleWidth(35)),
+                tablet: math.min(constraints.maxWidth * 0.7, SizeConfig.scaleWidth(40)),
+                desktop: math.min(constraints.maxWidth * 0.6, SizeConfig.scaleWidth(45)),
+              );
+              return SizedBox(
+                height: gaugeSize * 0.5,
+                width: gaugeSize,
+                child: CustomPaint(
+                  painter: _SemiCircleGaugePainter(
+                    score: score,
+                    isMobile: SizeConfig.isMobile,
+                    isTablet: SizeConfig.isTablet,
+                  ),
+                  child: Center(
+                    child: CustomText(
                       '${score.toInt()}%',
-                      fontSize: SizeConfig.responsive(mobile: 24, tablet: 28, desktop: 32),
+                      fontSize: SizeConfig.responsive(mobile: 20, tablet: 24, desktop: 28),
                       fontWeight: FontWeight.bold,
                       color: AppColors.black,
                     ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
+              );
+            },
           ),
           SizedBox(height: SizeConfig.scaleHeight(1)),
           CustomText(
@@ -106,8 +104,8 @@ class _SemiCircleGaugePainter extends CustomPainter {
     final backgroundPaint = Paint()
       ..color = AppColors.grey200
       ..style = PaintingStyle.stroke
-      ..strokeWidth = isMobile ? 8.0 : (isTablet ? 10.0 : 12.0)
-      ..strokeCap = StrokeCap.round;
+      ..strokeWidth = isMobile ? 8.0 : (isTablet ? 10.0 : 20.0)
+      ..strokeCap = StrokeCap.square;
 
     final backgroundPath = Path();
     backgroundPath.addArc(
@@ -121,8 +119,8 @@ class _SemiCircleGaugePainter extends CustomPainter {
     final scorePaint = Paint()
       ..color = AppColors.primary
       ..style = PaintingStyle.stroke
-      ..strokeWidth = isMobile ? 8.0 : (isTablet ? 10.0 : 12.0)
-      ..strokeCap = StrokeCap.round;
+      ..strokeWidth = isMobile ? 8.0 : (isTablet ? 10.0 : 20.0)
+      ..strokeCap = StrokeCap.square;
 
     final scorePath = Path();
     final scoreAngle = (score / 100) * math.pi;

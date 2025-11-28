@@ -3,22 +3,18 @@ import 'package:web_dashboard/core/widgets/custom_text.dart';
 import 'package:web_dashboard/core/widgets/size_config.dart';
 import 'package:web_dashboard/core/theme/app_colors.dart';
 
-class SoilStatusHeader extends StatelessWidget {
+class WeatherHeader extends StatelessWidget {
   final String userName;
   final String? userImagePath;
   final String selectedFarmer;
   final Function(String)? onFarmerChanged;
-  final Function(String)? onLandChanged;
-  final Function(String)? onAreaChanged;
 
-  const SoilStatusHeader({
+  const WeatherHeader({
     super.key,
     required this.userName,
     this.userImagePath,
     required this.selectedFarmer,
     this.onFarmerChanged,
-    this.onLandChanged,
-    this.onAreaChanged,
   });
 
   String _formatDate(DateTime date) {
@@ -105,24 +101,6 @@ class SoilStatusHeader extends StatelessWidget {
                           onFarmerChanged,
                         ),
                       ),
-                      SizedBox(width: SizeConfig.scaleWidth(1.5)),
-                      Flexible(
-                        child: _buildDropdown(
-                          'Select Land',
-                          'Land 1',
-                          ['Land 1', 'Land 2', 'Land 3'],
-                          onLandChanged,
-                        ),
-                      ),
-                      SizedBox(width: SizeConfig.scaleWidth(1.5)),
-                      Flexible(
-                        child: _buildDropdown(
-                          'Select area',
-                          'Area 1',
-                          ['Area 1', 'Area 2', 'Area 3'],
-                          onAreaChanged,
-                        ),
-                      ),
                       SizedBox(width: SizeConfig.scaleWidth(2)),
                       Row(
                         mainAxisSize: MainAxisSize.min,
@@ -172,27 +150,13 @@ class SoilStatusHeader extends StatelessWidget {
           ),
           if (SizeConfig.isMobile) ...[
             SizedBox(height: SizeConfig.scaleHeight(1.5)),
-            Wrap(
-              spacing: SizeConfig.scaleWidth(2),
-              runSpacing: SizeConfig.scaleHeight(1),
+            Row(
               children: [
                 _buildDropdown(
                   'Select farmer',
                   selectedFarmer,
                   ['Taha laib', 'yazid bakai', 'Chaba heytem'],
                   onFarmerChanged,
-                ),
-                _buildDropdown(
-                  'Select Land',
-                  'Land 1',
-                  ['Land 1', 'Land 2', 'Land 3'],
-                  onLandChanged,
-                ),
-                _buildDropdown(
-                  'Select area',
-                  'Area 1',
-                  ['Area 1', 'Area 2', 'Area 3'],
-                  onAreaChanged,
                 ),
               ],
             ),

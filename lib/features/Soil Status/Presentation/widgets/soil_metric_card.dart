@@ -24,17 +24,21 @@ class SoilMetricCard extends StatelessWidget {
   Widget build(BuildContext context) {
     SizeConfig.init(context);
     
+    // Create a lighter version of the background color
+    final lighterBackground = backgroundColor.withOpacity(0.3);
+    
     return Container(
-      padding: SizeConfig.scalePadding(
-        all: SizeConfig.responsive(mobile: 2, tablet: 2.5, desktop: 3),
+      padding: EdgeInsets.symmetric(
+        horizontal: SizeConfig.responsive(mobile: 7, tablet: 10, desktop: 20),
+        vertical: SizeConfig.responsive(mobile: 7, tablet: 10, desktop: 20),
       ),
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(
           SizeConfig.getResponsiveBorderRadius(
-            mobile: 2,
-            tablet: 2.5,
-            desktop: 3,
+            mobile: 1,
+            tablet: 1.2,
+            desktop: 1.5,
           ),
         ),
         boxShadow: [
@@ -47,35 +51,48 @@ class SoilMetricCard extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        
         mainAxisSize: MainAxisSize.min,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            
+            
             children: [
+              if (icon != null)
+                Container(
+                  padding: EdgeInsets.all(
+                    SizeConfig.responsive(mobile: 0.6, tablet: 0.8, desktop: 0.6),
+                  ),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    color: AppColors.white.withOpacity(0.3),
+                    
+                  ),
+                  child: buildIcon(
+                    icon!,
+                    SizeConfig.responsive(mobile: 2.2, tablet: 2.8, desktop: 2),
+                    SizeConfig.responsive(mobile: 2.2, tablet: 2.8, desktop: 2),
+                    
+                  ),
+                ),
+                SizedBox(width: SizeConfig.scaleWidth(1)),
               Expanded(
                 child: CustomText(
                   title,
-                  fontSize: SizeConfig.responsive(mobile: 12, tablet: 14, desktop: 16),
+                  fontSize: SizeConfig.responsive(mobile: 11, tablet: 13, desktop: 15),
                   fontWeight: FontWeight.w600,
                   color: AppColors.black,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              if (icon != null)
-                buildIcon(
-                  icon!,
-                  SizeConfig.responsive(mobile: 4, tablet: 5, desktop: 6),
-                  SizeConfig.responsive(mobile: 4, tablet: 5, desktop: 6),
-                  color: iconColor ?? AppColors.grey600,
-                ),
+              
             ],
           ),
-          SizedBox(height: SizeConfig.scaleHeight(1)),
+          SizedBox(height: SizeConfig.scaleHeight(1.2)),
           CustomText(
             value,
-            fontSize: SizeConfig.responsive(mobile: 18, tablet: 22, desktop: 26),
+            fontSize: SizeConfig.responsive(mobile: 13, tablet: 16, desktop: 20),
             fontWeight: FontWeight.bold,
             color: AppColors.black,
             maxLines: 1,
