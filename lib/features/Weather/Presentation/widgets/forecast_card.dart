@@ -115,4 +115,3 @@ class ForecastCard extends StatelessWidget {
     );
   }
 }
-

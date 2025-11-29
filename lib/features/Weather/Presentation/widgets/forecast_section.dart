@@ -190,4 +190,3 @@ class _ForecastSectionState extends State<ForecastSection> {
     );
   }
 }
-

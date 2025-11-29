@@ -11,6 +11,8 @@ import 'package:web_dashboard/features/My%20Farmers/Data/Api/my_farmers_api_serv
 import 'package:web_dashboard/features/My%20Farmers/Logic/my_farmers_cubit.dart';
 import 'package:web_dashboard/features/Notifications/Data/Api/notification_api_service.dart';
 import 'package:web_dashboard/features/Notifications/Logic/notification_cubit.dart';
+import 'package:web_dashboard/features/Weather%20Charts/Data/Api/weather_api_service.dart';
+import 'package:web_dashboard/features/Weather%20Charts/Logic/weather_cubit.dart';
 
 
 final GetIt getIt = GetIt.instance;
@@ -75,5 +77,15 @@ void setupDependencyInjection() {
       apiService: getIt<NotificationApiService>(),
       fcmService: getIt<FCMService>(),
     ),
+  );
+
+  // Weather Services
+  getIt.registerLazySingleton<WeatherApiService>(
+    () => WeatherApiService(getIt<ApiConsumer>()),
+  );
+
+  // Weather Cubit
+  getIt.registerLazySingleton<WeatherCubit>(
+    () => WeatherCubit(getIt<WeatherApiService>()),
   );
 }

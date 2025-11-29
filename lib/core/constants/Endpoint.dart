@@ -9,4 +9,8 @@ class Endpoints {
   static const sendNotificationEndPoint = "/api/notifications/send";
   static const getNotificationsEndPoint = "/api/notifications";
   static const markNotificationReadEndPoint = "/api/notifications/read";
+
+
+    static const weatherFetchAndSaveEndPoint = "/api/weather/fetch-and-save";
+
 }
