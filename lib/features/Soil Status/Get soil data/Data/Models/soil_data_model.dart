@@ -44,30 +44,41 @@ class SoilDataModel {
   });
 
   factory SoilDataModel.fromJson(Map<String, dynamic> json) {
+    // Helper function to safely convert to double
+    double _toDouble(dynamic value) {
+      if (value == null) return 0.0;
+      if (value is double) return value;
+      if (value is int) return value.toDouble();
+      if (value is String) {
+        return double.tryParse(value) ?? 0.0;
+      }
+      return 0.0;
+    }
+
     return SoilDataModel(
-      id: json['id'] ?? 0,
-      farmerId: json['farmerId'] ?? 0,
-      landId: json['landId'] ?? 0,
-      section: json['section'] ?? '',
-      soilMoisture: (json['soilMoisture'] ?? 0).toDouble(),
-      soilTemperature: (json['soilTemperature'] ?? 0).toDouble(),
-      ph: (json['ph'] ?? 0).toDouble(),
-      electricalConductivity: (json['electricalConductivity'] ?? 0).toDouble(),
-      organicMatter: (json['organicMatter'] ?? 0).toDouble(),
-      nitrite: (json['nitrite'] ?? 0).toDouble(),
-      soilHealthScore: (json['soilHealthScore'] ?? 0).toDouble(),
-      overallStatus: json['overallStatus'] ?? '',
-      nitrogen: (json['nitrogen'] ?? 0).toDouble(),
-      phosphorus: (json['phosphorus'] ?? 0).toDouble(),
-      potassium: (json['potassium'] ?? 0).toDouble(),
-      soilType: json['soilType'] ?? '',
-      latitude: (json['latitude'] ?? 0).toDouble(),
-      longitude: (json['longitude'] ?? 0).toDouble(),
+      id: json['id'] is int ? json['id'] : (json['id'] is String ? int.tryParse(json['id']) ?? 0 : 0),
+      farmerId: json['farmerId'] is int ? json['farmerId'] : (json['farmerId'] is String ? int.tryParse(json['farmerId']) ?? 0 : 0),
+      landId: json['landId'] is int ? json['landId'] : (json['landId'] is String ? int.tryParse(json['landId']) ?? 0 : 0),
+      section: json['section']?.toString() ?? '',
+      soilMoisture: _toDouble(json['soilMoisture']),
+      soilTemperature: _toDouble(json['soilTemperature']),
+      ph: _toDouble(json['ph']),
+      electricalConductivity: _toDouble(json['electricalConductivity']),
+      organicMatter: _toDouble(json['organicMatter']),
+      nitrite: _toDouble(json['nitrite']),
+      soilHealthScore: _toDouble(json['soilHealthScore']),
+      overallStatus: json['overallStatus']?.toString() ?? '',
+      nitrogen: _toDouble(json['nitrogen']),
+      phosphorus: _toDouble(json['phosphorus']),
+      potassium: _toDouble(json['potassium']),
+      soilType: json['soilType']?.toString() ?? '',
+      latitude: _toDouble(json['latitude']),
+      longitude: _toDouble(json['longitude']),
       createdAt: json['createdAt'] != null 
-          ? DateTime.parse(json['createdAt']) 
+          ? DateTime.tryParse(json['createdAt'].toString()) ?? DateTime.now()
           : DateTime.now(),
       updatedAt: json['updatedAt'] != null 
-          ? DateTime.parse(json['updatedAt']) 
+          ? DateTime.tryParse(json['updatedAt'].toString()) ?? DateTime.now()
           : DateTime.now(),
     );
   }

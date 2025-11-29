@@ -5,6 +5,8 @@ import 'package:web_dashboard/core/Database/api_consumer.dart';
 import 'package:web_dashboard/core/services/fcm_service.dart';
 import 'package:web_dashboard/features/Auth/Data/Api/login_api_service.dart';
 import 'package:web_dashboard/features/Auth/Logic/login_cubit.dart';
+import 'package:web_dashboard/features/Recommendation/Data/Api/recommendation_api_service.dart';
+import 'package:web_dashboard/features/Recommendation/Logic/recommendation_cubit.dart';
 import 'package:web_dashboard/features/User%20Profile/Data/Api/user_api_service.dart';
 import 'package:web_dashboard/features/User%20Profile/Logic/user_cubit.dart';
 import 'package:web_dashboard/features/My%20Farmers/Data/Api/my_farmers_api_service.dart';
@@ -29,6 +31,10 @@ import 'package:web_dashboard/features/Weather/Get%20Weather%20a%20day/Data/Api/
 import 'package:web_dashboard/features/Weather/Get%20Weather%20a%20day/Logic/today_weather_cubit.dart';
 import 'package:web_dashboard/features/Weather/Get%20Weather%203%20Days/Data/Api/weather_forecast_api_service.dart';
 import 'package:web_dashboard/features/Weather/Get%20Weather%203%20Days/Logic/weather_forecast_cubit.dart';
+import 'package:web_dashboard/features/Farmers/Cron%20job/Data/Api/weather_cron_job_api_service.dart';
+import 'package:web_dashboard/features/Farmers/Cron%20job/Logic/weather_cron_job_cubit.dart';
+import 'package:web_dashboard/features/Graphs/Data/Api/grafana_graph_api_service.dart';
+import 'package:web_dashboard/features/Graphs/Logic/grafana_graph_cubit.dart';
 
 
 final GetIt getIt = GetIt.instance;
@@ -183,5 +189,35 @@ void setupDependencyInjection() {
   // Weather Forecast Cubit (factory to allow multiple instances for different lands)
   getIt.registerFactory<WeatherForecastCubit>(
     () => WeatherForecastCubit(getIt<WeatherForecastApiService>()),
+  );
+
+  // Weather Cron Job Services
+  getIt.registerLazySingleton<WeatherCronJobApiService>(
+    () => WeatherCronJobApiService(getIt<ApiConsumer>()),
+  );
+
+  // Weather Cron Job Cubit (factory to allow fresh state for each start attempt)
+  getIt.registerFactory<WeatherCronJobCubit>(
+    () => WeatherCronJobCubit(getIt<WeatherCronJobApiService>()),
+  );
+
+  // Grafana Graph Services
+  getIt.registerLazySingleton<GrafanaGraphApiService>(
+    () => GrafanaGraphApiService(getIt<ApiConsumer>()),
+  );
+
+  // Grafana Graph Cubit (factory to allow multiple instances for different requests)
+  getIt.registerFactory<GrafanaGraphCubit>(
+    () => GrafanaGraphCubit(getIt<GrafanaGraphApiService>()),
+  );
+
+  // RecommendationApiService
+  getIt.registerLazySingleton<RecommendationApiService>(
+    () => RecommendationApiService(getIt<DioConsumer>()),
+  );
+
+  // RecommendationCubit
+  getIt.registerFactory<RecommendationCubit>(
+    () => RecommendationCubit(getIt<RecommendationApiService>()),
   );
 }

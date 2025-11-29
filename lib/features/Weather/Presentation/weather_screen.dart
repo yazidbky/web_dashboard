@@ -18,8 +18,11 @@ import 'package:web_dashboard/features/Weather/Get%20Weather%203%20Days/Logic/we
 import 'package:web_dashboard/features/Weather/Presentation/widgets/weather_header.dart';
 import 'package:web_dashboard/features/Weather/Presentation/widgets/kpi_card.dart';
 import 'package:web_dashboard/features/Weather/Presentation/widgets/forecast_section.dart';
-import 'package:web_dashboard/features/Weather/Presentation/widgets/temperature_chart.dart';
 import 'package:web_dashboard/features/Weather/Presentation/widgets/forecast_card.dart';
+import 'package:web_dashboard/features/Graphs/Logic/grafana_graph_cubit.dart';
+import 'package:web_dashboard/features/Graphs/Logic/grafana_graph_state.dart';
+import 'package:web_dashboard/features/Graphs/Data/Models/grafana_graph_request_model.dart';
+import 'package:web_dashboard/features/Graphs/Presentation/widgets/grafana_iframe.dart';
 
 class WeatherScreen extends StatefulWidget {
   const WeatherScreen({super.key});
@@ -38,6 +41,7 @@ class _WeatherScreenState extends State<WeatherScreen> {
   late FarmerLandsCubit _farmerLandsCubit;
   late TodayWeatherCubit _todayWeatherCubit;
   late WeatherForecastCubit _weatherForecastCubit;
+  late GrafanaGraphCubit _grafanaGraphCubit;
   
   // Stream subscriptions
   StreamSubscription<FarmerLandsState>? _landsSubscription;
@@ -52,6 +56,7 @@ class _WeatherScreenState extends State<WeatherScreen> {
     _farmerLandsCubit = getIt<FarmerLandsCubit>();
     _todayWeatherCubit = getIt<TodayWeatherCubit>();
     _weatherForecastCubit = getIt<WeatherForecastCubit>();
+    _grafanaGraphCubit = getIt<GrafanaGraphCubit>();
     
     // Listen to lands state
     _landsSubscription = _farmerLandsCubit.stream.listen((state) {
@@ -88,6 +93,7 @@ class _WeatherScreenState extends State<WeatherScreen> {
     _farmerLandsCubit.close();
     _todayWeatherCubit.close();
     _weatherForecastCubit.close();
+    _grafanaGraphCubit.close();
     super.dispose();
   }
 
@@ -95,6 +101,28 @@ class _WeatherScreenState extends State<WeatherScreen> {
     print('🔄 [WeatherScreen] Fetching weather data for land ID: $landId');
     _todayWeatherCubit.getTodayWeather(landId);
     _weatherForecastCubit.getWeatherForecast(landId);
+    // Fetch Grafana graph for temperature
+    _fetchGrafanaGraph(landId);
+  }
+
+  void _fetchGrafanaGraph(int landId) {
+    if (selectedFarmerId == null) {
+      print('⚠️ [WeatherScreen] Missing farmer ID for Grafana graph');
+      return;
+    }
+
+    print('🔄 [WeatherScreen] Fetching Grafana graph for temperature');
+
+    final request = GrafanaGraphRequestModel(
+      farmerId: selectedFarmerId!,
+      landId: landId,
+      column: 'temperature',
+      plotType: 'time series',
+      tables: 'weathers', // Weather data table
+      sectionId: null, // Weather data doesn't use sections
+    );
+
+    _grafanaGraphCubit.getGrafanaGraphUrl(request);
   }
 
   void _fetchFarmerLands(int farmerId) {
@@ -151,6 +179,7 @@ class _WeatherScreenState extends State<WeatherScreen> {
                 BlocProvider.value(value: _farmerLandsCubit),
                 BlocProvider.value(value: _todayWeatherCubit),
                 BlocProvider.value(value: _weatherForecastCubit),
+                BlocProvider.value(value: _grafanaGraphCubit),
               ],
               child: _buildResponsiveLayout(
                 context,
@@ -254,15 +283,10 @@ class _WeatherScreenState extends State<WeatherScreen> {
             },
           ),
           SizedBox(height: SizeConfig.scaleHeight(2)),
-          ConstrainedBox(
-            constraints: BoxConstraints(
-              maxHeight: SizeConfig.scaleHeight(35),
-              minHeight: SizeConfig.scaleHeight(30),
-            ),
-            child: TemperatureChart(
-              dataPoints: chartData,
-              labels: chartLabels,
-            ),
+          BlocBuilder<GrafanaGraphCubit, GrafanaGraphState>(
+            builder: (context, graphState) {
+              return _buildGrafanaGraphContainer(graphState);
+            },
           ),
           SizedBox(height: SizeConfig.scaleHeight(2)),
         ],
@@ -348,15 +372,10 @@ class _WeatherScreenState extends State<WeatherScreen> {
               SizedBox(width: SizeConfig.scaleWidth(2)),
               Expanded(
                 flex: 1,
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    maxHeight: SizeConfig.scaleHeight(45),
-                    minHeight: SizeConfig.scaleHeight(40),
-                  ),
-                  child: TemperatureChart(
-                    dataPoints: chartData,
-                    labels: chartLabels,
-                  ),
+                child: BlocBuilder<GrafanaGraphCubit, GrafanaGraphState>(
+                  builder: (context, graphState) {
+                    return _buildGrafanaGraphContainer(graphState);
+                  },
                 ),
               ),
             ],
@@ -445,15 +464,10 @@ class _WeatherScreenState extends State<WeatherScreen> {
               SizedBox(width: SizeConfig.scaleWidth(3)),
               Expanded(
                 flex: 1,
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    maxHeight: SizeConfig.scaleHeight(50),
-                    minHeight: SizeConfig.scaleHeight(45),
-                  ),
-                  child: TemperatureChart(
-                    dataPoints: chartData,
-                    labels: chartLabels,
-                  ),
+                child: BlocBuilder<GrafanaGraphCubit, GrafanaGraphState>(
+                  builder: (context, graphState) {
+                    return _buildGrafanaGraphContainer(graphState);
+                  },
                 ),
               ),
             ],
@@ -732,6 +746,172 @@ class _WeatherScreenState extends State<WeatherScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildGrafanaGraphContainer(GrafanaGraphState graphState) {
+    if (graphState is GrafanaGraphLoading) {
+      return ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: SizeConfig.scaleHeight(SizeConfig.isMobile ? 35 : SizeConfig.isTablet ? 45 : 50),
+          minHeight: SizeConfig.scaleHeight(SizeConfig.isMobile ? 30 : SizeConfig.isTablet ? 40 : 45),
+        ),
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.white,
+            borderRadius: BorderRadius.circular(
+              SizeConfig.getResponsiveBorderRadius(mobile: 2, tablet: 2.5, desktop: 3),
+            ),
+            border: Border.all(color: AppColors.grey200),
+          ),
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const CircularProgressIndicator(),
+                SizedBox(height: SizeConfig.scaleHeight(2)),
+                Text(
+                  'Loading graph...',
+                  style: TextStyle(
+                    fontSize: SizeConfig.responsive(mobile: 14, tablet: 16, desktop: 18),
+                    color: AppColors.grey600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (graphState is GrafanaGraphFailure) {
+      return ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: SizeConfig.scaleHeight(SizeConfig.isMobile ? 35 : SizeConfig.isTablet ? 45 : 50),
+          minHeight: SizeConfig.scaleHeight(SizeConfig.isMobile ? 30 : SizeConfig.isTablet ? 40 : 45),
+        ),
+        child: Container(
+          padding: SizeConfig.scalePadding(all: 4),
+          decoration: BoxDecoration(
+            color: AppColors.white,
+            borderRadius: BorderRadius.circular(
+              SizeConfig.getResponsiveBorderRadius(mobile: 2, tablet: 2.5, desktop: 3),
+            ),
+            border: Border.all(color: AppColors.grey200),
+          ),
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.error_outline,
+                  size: SizeConfig.responsive(mobile: 48, tablet: 56, desktop: 64),
+                  color: AppColors.error,
+                ),
+                SizedBox(height: SizeConfig.scaleHeight(2)),
+                Text(
+                  graphState.failureMessage,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: SizeConfig.responsive(mobile: 14, tablet: 16, desktop: 18),
+                    color: AppColors.error,
+                  ),
+                ),
+                SizedBox(height: SizeConfig.scaleHeight(2)),
+                ElevatedButton(
+                  onPressed: () {
+                    if (selectedLandId != null) {
+                      _fetchGrafanaGraph(selectedLandId!);
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                  ),
+                  child: Text(
+                    'Retry',
+                    style: TextStyle(
+                      color: AppColors.white,
+                      fontSize: SizeConfig.responsive(mobile: 14, tablet: 16, desktop: 18),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (graphState is GrafanaGraphSuccess) {
+      return ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: SizeConfig.scaleHeight(SizeConfig.isMobile ? 35 : SizeConfig.isTablet ? 45 : 50),
+          minHeight: SizeConfig.scaleHeight(SizeConfig.isMobile ? 30 : SizeConfig.isTablet ? 40 : 45),
+        ),
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.white,
+            borderRadius: BorderRadius.circular(
+              SizeConfig.getResponsiveBorderRadius(mobile: 2, tablet: 2.5, desktop: 3),
+            ),
+            border: Border.all(color: AppColors.grey200),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(
+              SizeConfig.getResponsiveBorderRadius(mobile: 2, tablet: 2.5, desktop: 3),
+            ),
+            child: GrafanaIframe(
+              key: ValueKey(graphState.data.iframeUrl),
+              url: graphState.data.iframeUrl,
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Initial state - show placeholder
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        maxHeight: SizeConfig.scaleHeight(SizeConfig.isMobile ? 35 : SizeConfig.isTablet ? 45 : 50),
+        minHeight: SizeConfig.scaleHeight(SizeConfig.isMobile ? 30 : SizeConfig.isTablet ? 40 : 45),
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(
+            SizeConfig.getResponsiveBorderRadius(mobile: 2, tablet: 2.5, desktop: 3),
+          ),
+          border: Border.all(color: AppColors.grey200),
+        ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.bar_chart,
+                size: SizeConfig.responsive(mobile: 48, tablet: 56, desktop: 64),
+                color: AppColors.grey400,
+              ),
+              SizedBox(height: SizeConfig.scaleHeight(2)),
+              Text(
+                'Select a farmer and land to view the temperature graph',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: SizeConfig.responsive(mobile: 14, tablet: 16, desktop: 18),
+                  color: AppColors.grey600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

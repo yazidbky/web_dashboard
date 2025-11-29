@@ -47,4 +47,15 @@ class Endpoints {
   /// DELETE /api/farmers/disconnect/{farmerId}
   static String disconnectFarmerEndPoint(int farmerId) =>
       "/api/farmers/disconnect/$farmerId";
+
+  // Cron job endpoints
+  /// POST /api/cron/weather/start
+  static const startWeatherCronJobEndPoint = "/api/cron/weather/start";
+
+  // Grafana graph endpoints
+  /// POST /api/grafana/graph-url
+  static const grafanaGraphUrlEndPoint = "/api/grafana/graph-url";
+
+    static String recommendationsEndPoint(int farmerId, int landId) =>
+      "/api/recommendations/$farmerId/$landId";
 }

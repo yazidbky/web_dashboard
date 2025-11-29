@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:web_dashboard/features/Soil%20Status/Get%20soil%20data/Data/Models/soil_data_model.dart';
+import 'package:web_dashboard/features/Soil%20Status/Get%20soil%20data/Data/Models/soil_data_wrapper_model.dart';
 
 abstract class SoilDataState extends Equatable {
   const SoilDataState();
@@ -16,7 +16,7 @@ class SoilDataLoading extends SoilDataState {}
 
 /// State when soil data is successfully loaded
 class SoilDataSuccess extends SoilDataState {
-  final SoilDataModel soilData;
+  final SoilDataWrapperModel soilData;
   final String message;
 
   const SoilDataSuccess({

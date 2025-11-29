@@ -25,6 +25,8 @@ import 'package:web_dashboard/core/DI/dependency_injection.dart';
 import 'package:web_dashboard/features/Farmers/Farmers%20Disconnect/Logic/disconnect_farmer_cubit.dart';
 import 'package:web_dashboard/features/Farmers/Farmers%20Disconnect/Logic/disconnect_farmer_state.dart';
 import 'package:web_dashboard/core/widgets/confirmation_dialog.dart';
+import 'package:web_dashboard/features/Farmers/Cron%20job/Logic/weather_cron_job_cubit.dart';
+import 'package:web_dashboard/features/Farmers/Cron%20job/Logic/weather_cron_job_state.dart';
 
 class FarmersScreen extends StatefulWidget {
   const FarmersScreen({super.key});
@@ -38,6 +40,7 @@ class _FarmersScreenState extends State<FarmersScreen> {
   FarmerTableData? _selectedFarmerData;
   StreamSubscription<FarmerLandsState>? _landsSubscription;
   StreamSubscription<DisconnectFarmerState>? _disconnectSubscription;
+  StreamSubscription<WeatherCronJobState>? _cronJobSubscription;
 
   @override
   void initState() {
@@ -52,6 +55,7 @@ class _FarmersScreenState extends State<FarmersScreen> {
   void dispose() {
     _landsSubscription?.cancel();
     _disconnectSubscription?.cancel();
+    _cronJobSubscription?.cancel();
     super.dispose();
   }
 
@@ -166,6 +170,9 @@ class _FarmersScreenState extends State<FarmersScreen> {
           
           // Fetch lands for this farmer
           _fetchFarmerLandsAndWeather(state.data.farmerId);
+          
+          // Start weather cron job
+          _startWeatherCronJob();
         }
       },
       child: BlocBuilder<UserCubit, UserState>(
@@ -258,6 +265,63 @@ class _FarmersScreenState extends State<FarmersScreen> {
     }
     
     print('✅ [FarmersScreen] All weather fetch requests scheduled');
+  }
+
+  /// Starts the weather cron job
+  void _startWeatherCronJob() async {
+    if (!mounted) return;
+    
+    print('🔄 [FarmersScreen] Starting weather cron job...');
+    
+    // Cancel previous subscription if any
+    await _cronJobSubscription?.cancel();
+    
+    // Create a new instance of WeatherCronJobCubit
+    final weatherCronJobCubit = getIt<WeatherCronJobCubit>();
+    
+    // Listen to the cubit stream to handle the response
+    _cronJobSubscription = weatherCronJobCubit.stream.listen((cronJobState) {
+      if (!mounted) return;
+      
+      if (cronJobState is WeatherCronJobSuccess) {
+        print('✅ [FarmersScreen] Weather cron job started successfully!');
+        print('📋 [FarmersScreen] Schedule: ${cronJobState.data.schedule}');
+        print('📋 [FarmersScreen] Lands Count: ${cronJobState.data.landsCount}');
+        
+        // Show success message
+        showAppSnackBar(
+          context: context,
+          message: 'Weather cron job started successfully (${cronJobState.data.schedule})',
+          icon: Icons.schedule,
+          backgroundColor: AppColors.primary,
+          textColor: AppColors.white,
+          behavior: SnackBarBehavior.floating,
+        );
+        
+        // Cancel subscription after success
+        _cronJobSubscription?.cancel();
+        _cronJobSubscription = null;
+      } else if (cronJobState is WeatherCronJobFailure) {
+        print('❌ [FarmersScreen] Failed to start weather cron job: ${cronJobState.failureMessage}');
+        
+        // Show error message (optional - you might want to make this less intrusive)
+        showAppSnackBar(
+          context: context,
+          message: 'Failed to start weather cron job: ${cronJobState.failureMessage}',
+          icon: Icons.error,
+          backgroundColor: AppColors.error,
+          textColor: AppColors.white,
+          behavior: SnackBarBehavior.floating,
+        );
+        
+        // Cancel subscription after failure
+        _cronJobSubscription?.cancel();
+        _cronJobSubscription = null;
+      }
+    });
+    
+    // Start the weather cron job
+    await weatherCronJobCubit.startWeatherCronJob();
   }
 
   Widget _buildResponsiveLayout(

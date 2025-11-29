@@ -66,91 +66,96 @@ class ConfirmationDialog extends StatelessWidget {
     return Dialog(
       backgroundColor: AppColors.transparent,
       insetPadding: SizeConfig.scalePadding(horizontal: 6),
-      child: Container(
-        padding: SizeConfig.allPadding(6),
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(SizeConfig.scaleRadius(5)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.15),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
-            ),
-          ],
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: SizeConfig.scaleWidth(50), // Limit dialog width
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Icon
-            Container(
-              padding: SizeConfig.allPadding(4),
-              decoration: BoxDecoration(
-                color: _lightColor,
-                shape: BoxShape.circle,
+        child: Container(
+          padding: SizeConfig.allPadding(4),
+          decoration: BoxDecoration(
+            color: AppColors.white,
+            borderRadius: BorderRadius.circular(SizeConfig.scaleRadius(3)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.15),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
               ),
-              child: Icon(
-                icon,
-                size: SizeConfig.scaleWidth(12),
-                color: _primaryColor,
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Icon
+              Container(
+                padding: SizeConfig.allPadding(2.5),
+                decoration: BoxDecoration(
+                  color: _lightColor,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  icon,
+                  size: SizeConfig.scaleWidth(8),
+                  color: _primaryColor,
+                ),
               ),
-            ),
-            SizedBox(height: SizeConfig.scaleHeight(3)),
-            // Title
-            CustomText(
-              title,
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              color: AppColors.black,
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: SizeConfig.scaleHeight(1.5)),
-            // Description
-            CustomText(
-              description,
-              fontSize: 14,
-              fontWeight: FontWeight.w400,
-              color: AppColors.grey600,
-              textAlign: TextAlign.center,
-              maxLines: 4,
-            ),
-            SizedBox(height: SizeConfig.scaleHeight(4)),
-            // Buttons
-            Row(
-              children: [
-                // Cancel button
-                Expanded(
-                  child: CustomButton(
-                    onPressed: () {
-                      Navigator.of(context).pop(false);
-                      onCancel?.call();
-                    },
-                    text: cancelText,
-                    type: ButtonType.outlined,
-                    borderColor: AppColors.grey400,
-                    textColor: AppColors.grey700,
-                    height: SizeConfig.scaleHeight(6),
-                    borderRadius: SizeConfig.scaleRadius(3),
+              SizedBox(height: SizeConfig.scaleHeight(2)),
+              // Title
+              CustomText(
+                title,
+                fontSize: SizeConfig.responsive(mobile: 18, tablet: 20, desktop: 20),
+                fontWeight: FontWeight.w700,
+                color: AppColors.black,
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: SizeConfig.scaleHeight(1)),
+              // Description
+              CustomText(
+                description,
+                fontSize: SizeConfig.responsive(mobile: 12, tablet: 13, desktop: 14),
+                fontWeight: FontWeight.w400,
+                color: AppColors.grey600,
+                textAlign: TextAlign.center,
+                maxLines: 3,
+              ),
+              SizedBox(height: SizeConfig.scaleHeight(3)),
+              // Buttons
+              Row(
+                children: [
+                  // Cancel button
+                  Expanded(
+                    child: CustomButton(
+                      onPressed: () {
+                        Navigator.of(context).pop(false);
+                        onCancel?.call();
+                      },
+                      text: cancelText,
+                      type: ButtonType.outlined,
+                      borderColor: AppColors.grey400,
+                      textColor: AppColors.grey700,
+                      height: SizeConfig.scaleHeight(5),
+                      borderRadius: SizeConfig.scaleRadius(2.5),
+                    ),
                   ),
-                ),
-                SizedBox(width: SizeConfig.scaleWidth(3)),
-                // Confirm button
-                Expanded(
-                  child: CustomButton(
-                    onPressed: () {
-                      Navigator.of(context).pop(true);
-                      onConfirm?.call();
-                    },
-                    text: confirmText,
-                    backgroundColor: _primaryColor,
-                    textColor: AppColors.white,
-                    height: SizeConfig.scaleHeight(6),
-                    borderRadius: SizeConfig.scaleRadius(3),
+                  SizedBox(width: SizeConfig.scaleWidth(2)),
+                  // Confirm button
+                  Expanded(
+                    child: CustomButton(
+                      onPressed: () {
+                        Navigator.of(context).pop(true);
+                        onConfirm?.call();
+                      },
+                      text: confirmText,
+                      backgroundColor: _primaryColor,
+                      textColor: AppColors.white,
+                      height: SizeConfig.scaleHeight(5),
+                      borderRadius: SizeConfig.scaleRadius(2.5),
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

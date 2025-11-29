@@ -36,6 +36,8 @@ class _ForecastSectionState extends State<ForecastSection> {
     SizeConfig.init(context);
     
     return Container(
+      
+    
       padding: SizeConfig.scalePadding(
         all: SizeConfig.responsive(mobile: 2, tablet: 2.5, desktop: 3),
       ),
@@ -61,7 +63,7 @@ class _ForecastSectionState extends State<ForecastSection> {
         mainAxisSize: MainAxisSize.min,
         children: [
           CustomText(
-            '7-Day Forecast Cards',
+            '3-Day Forecast Cards',
             fontSize: SizeConfig.responsive(mobile: 16, tablet: 18, desktop: 20),
             fontWeight: FontWeight.bold,
             color: AppColors.black,
@@ -151,7 +153,8 @@ class _ForecastSectionState extends State<ForecastSection> {
   Widget _buildForecastCards() {
     return ConstrainedBox(
       constraints: BoxConstraints(
-        maxHeight: SizeConfig.scaleHeight(50),
+        minHeight: SizeConfig.scaleHeight(SizeConfig.isMobile ? 10 : SizeConfig.isTablet ? 20 : 30),
+        maxHeight: SizeConfig.scaleHeight(SizeConfig.isMobile ? 10 : SizeConfig.isTablet ? 20 : 30),
       ),
       child: RawScrollbar(
         controller: _scrollController,
