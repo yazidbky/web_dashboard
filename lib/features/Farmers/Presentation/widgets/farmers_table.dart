@@ -7,11 +7,13 @@ import 'package:web_dashboard/features/Farmers/Presentation/widgets/farmer_table
 class FarmersTable extends StatelessWidget {
   final List<FarmerTableData> farmers;
   final Function(FarmerTableData)? onFarmerSelected;
+  final Function(FarmerTableData)? onFarmerDisconnect;
 
   const FarmersTable({
     super.key,
     required this.farmers,
     this.onFarmerSelected,
+    this.onFarmerDisconnect,
   });
 
   @override
@@ -58,6 +60,16 @@ class FarmersTable extends StatelessWidget {
                 _buildMobileRow('Farmer Name', farmer.farmerName),
                 _buildMobileRowWithBadge('Crop Type', farmer.cropType),
                 _buildMobileRow('Last Activity', farmer.lastActivity),
+                if (onFarmerDisconnect != null)
+                  Padding(
+                    padding: EdgeInsets.only(top: SizeConfig.scaleHeight(1)),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        _buildDisconnectButton(context, farmer),
+                      ],
+                    ),
+                  ),
               ],
             ),
           ),
@@ -168,6 +180,15 @@ class FarmersTable extends StatelessWidget {
                   color: AppColors.grey700,
                 ),
               ),
+              if (onFarmerDisconnect != null)
+                DataColumn(
+                  label: CustomText(
+                    'Actions',
+                    fontSize: SizeConfig.responsive(mobile: 12, tablet: 13, desktop: 14),
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.grey700,
+                  ),
+                ),
             ],
             rows: farmers.map((farmer) {
               return DataRow(
@@ -194,6 +215,10 @@ class FarmersTable extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
+                  if (onFarmerDisconnect != null)
+                    DataCell(
+                      _buildDisconnectButton(context, farmer),
+                    ),
                 ],
               );
             }).toList(),
@@ -220,6 +245,48 @@ class FarmersTable extends StatelessWidget {
         fontSize: SizeConfig.responsive(mobile: 10, tablet: 11, desktop: 12),
         fontWeight: FontWeight.w600,
         color: AppColors.white,
+      ),
+    );
+  }
+
+  Widget _buildDisconnectButton(BuildContext context, FarmerTableData farmer) {
+    return InkWell(
+      onTap: () => onFarmerDisconnect?.call(farmer),
+      borderRadius: BorderRadius.circular(
+        SizeConfig.getResponsiveBorderRadius(mobile: 1, tablet: 1.2, desktop: 1.5),
+      ),
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          horizontal: SizeConfig.scaleWidth(2),
+          vertical: SizeConfig.scaleHeight(0.5),
+        ),
+        decoration: BoxDecoration(
+          color: AppColors.error.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(
+            SizeConfig.getResponsiveBorderRadius(mobile: 1, tablet: 1.2, desktop: 1.5),
+          ),
+          border: Border.all(
+            color: AppColors.error,
+            width: 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.link_off,
+              size: SizeConfig.responsive(mobile: 14, tablet: 16, desktop: 18),
+              color: AppColors.error,
+            ),
+            SizedBox(width: SizeConfig.scaleWidth(1)),
+            CustomText(
+              'Disconnect',
+              fontSize: SizeConfig.responsive(mobile: 10, tablet: 11, desktop: 12),
+              fontWeight: FontWeight.w600,
+              color: AppColors.error,
+            ),
+          ],
+        ),
       ),
     );
   }

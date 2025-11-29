@@ -44,7 +44,7 @@ class CropHeader extends StatelessWidget {
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Expanded(
                 child: Column(
@@ -68,60 +68,54 @@ class CropHeader extends StatelessWidget {
               ),
               if (!SizeConfig.isMobile) ...[
                 SizedBox(width: SizeConfig.scaleWidth(2)),
-                Flexible(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: SizeConfig.scaleWidth(5),
-                            height: SizeConfig.scaleWidth(5),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: AppColors.primary,
-                              border: Border.all(
-                                color: AppColors.white,
-                                width: 2,
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Dropdown on the left of profile
+                    _buildDropdown(
+                      'Select farmer',
+                      selectedFarmer,
+                      farmers,
+                      onFarmerChanged,
+                    ),
+                    SizedBox(width: SizeConfig.scaleWidth(2)),
+                    Container(
+                      width: SizeConfig.scaleWidth(5),
+                      height: SizeConfig.scaleWidth(5),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.primary,
+                        border: Border.all(
+                          color: AppColors.white,
+                          width: 2,
+                        ),
+                      ),
+                      child: userImagePath != null
+                          ? ClipOval(
+                              child: Image.asset(
+                                userImagePath!,
+                                fit: BoxFit.cover,
                               ),
+                            )
+                          : Icon(
+                              Icons.person,
+                              color: AppColors.white,
+                              size: SizeConfig.scaleWidth(3),
                             ),
-                            child: userImagePath != null
-                                ? ClipOval(
-                                    child: Image.asset(
-                                      userImagePath!,
-                                      fit: BoxFit.cover,
-                                    ),
-                                  )
-                                : Icon(
-                                    Icons.person,
-                                    color: AppColors.white,
-                                    size: SizeConfig.scaleWidth(3),
-                                  ),
-                          ),
-                          SizedBox(width: SizeConfig.scaleWidth(1)),
-                          Flexible(
-                            child: CustomText(
-                              userName,
-                              fontSize: SizeConfig.responsive(mobile: 14, tablet: 16, desktop: 18),
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.black,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
+                    ),
+                    SizedBox(width: SizeConfig.scaleWidth(1)),
+                    Flexible(
+                      child: CustomText(
+                        userName,
+                        fontSize: SizeConfig.responsive(mobile: 14, tablet: 16, desktop: 18),
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.black,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      SizedBox(height: SizeConfig.scaleHeight(1)),
-                      _buildDropdown(
-                        'Select farmer',
-                        selectedFarmer,
-                        farmers.isNotEmpty ? farmers : [selectedFarmer],
-                        onFarmerChanged,
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ],
             ],
@@ -133,7 +127,7 @@ class CropHeader extends StatelessWidget {
                 _buildDropdown(
                   'Select farmer',
                   selectedFarmer,
-                  farmers.isNotEmpty ? farmers : [selectedFarmer],
+                  farmers,
                   onFarmerChanged,
                 ),
               ],
@@ -150,6 +144,10 @@ class CropHeader extends StatelessWidget {
     List<String> items,
     Function(String)? onChanged,
   ) {
+    // Ensure value exists in items list, or use null (which shows hint)
+    // This prevents the dropdown assertion error
+    final validValue = items.isNotEmpty && items.contains(value) ? value : null;
+    
     return ConstrainedBox(
       constraints: BoxConstraints(
         minWidth: SizeConfig.responsive(mobile: 80, tablet: 100, desktop: 120),
@@ -168,7 +166,18 @@ class CropHeader extends StatelessWidget {
           border: Border.all(color: AppColors.grey300, width: 1),
         ),
         child: DropdownButton<String>(
-          value: value,
+          value: validValue,
+          hint: items.isEmpty 
+              ? CustomText(
+                  'No farmers',
+                  fontSize: SizeConfig.responsive(mobile: 11, tablet: 12, desktop: 13),
+                  color: AppColors.grey500,
+                )
+              : CustomText(
+                  'Select farmer',
+                  fontSize: SizeConfig.responsive(mobile: 11, tablet: 12, desktop: 13),
+                  color: AppColors.grey500,
+                ),
           underline: const SizedBox(),
           isDense: true,
           isExpanded: true,

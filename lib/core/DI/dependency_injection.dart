@@ -23,6 +23,12 @@ import 'package:web_dashboard/features/Farmers/Get%20Farmer%20Lands/Data/Api/far
 import 'package:web_dashboard/features/Farmers/Get%20Farmer%20Lands/Logic/farmer_lands_cubit.dart';
 import 'package:web_dashboard/features/Soil%20Status/Get%20All%20Soil%20Sections/Data/Api/soil_sections_api_service.dart';
 import 'package:web_dashboard/features/Soil%20Status/Get%20All%20Soil%20Sections/Logic/soil_sections_cubit.dart';
+import 'package:web_dashboard/features/Farmers/Farmers%20Disconnect/Data/Api/disconnect_farmer_api_service.dart';
+import 'package:web_dashboard/features/Farmers/Farmers%20Disconnect/Logic/disconnect_farmer_cubit.dart';
+import 'package:web_dashboard/features/Weather/Get%20Weather%20a%20day/Data/Api/today_weather_api_service.dart';
+import 'package:web_dashboard/features/Weather/Get%20Weather%20a%20day/Logic/today_weather_cubit.dart';
+import 'package:web_dashboard/features/Weather/Get%20Weather%203%20Days/Data/Api/weather_forecast_api_service.dart';
+import 'package:web_dashboard/features/Weather/Get%20Weather%203%20Days/Logic/weather_forecast_cubit.dart';
 
 
 final GetIt getIt = GetIt.instance;
@@ -147,5 +153,35 @@ void setupDependencyInjection() {
   // Get All Soil Sections Cubit (factory to allow multiple instances for different farmer/land combinations)
   getIt.registerFactory<SoilSectionsCubit>(
     () => SoilSectionsCubit(getIt<SoilSectionsApiService>()),
+  );
+
+  // Disconnect Farmer Services
+  getIt.registerLazySingleton<DisconnectFarmerApiService>(
+    () => DisconnectFarmerApiService(getIt<ApiConsumer>()),
+  );
+
+  // Disconnect Farmer Cubit (factory to allow fresh state for each disconnection attempt)
+  getIt.registerFactory<DisconnectFarmerCubit>(
+    () => DisconnectFarmerCubit(getIt<DisconnectFarmerApiService>()),
+  );
+
+  // Today Weather Services
+  getIt.registerLazySingleton<TodayWeatherApiService>(
+    () => TodayWeatherApiService(getIt<ApiConsumer>()),
+  );
+
+  // Today Weather Cubit (factory to allow multiple instances for different lands)
+  getIt.registerFactory<TodayWeatherCubit>(
+    () => TodayWeatherCubit(getIt<TodayWeatherApiService>()),
+  );
+
+  // Weather Forecast Services
+  getIt.registerLazySingleton<WeatherForecastApiService>(
+    () => WeatherForecastApiService(getIt<ApiConsumer>()),
+  );
+
+  // Weather Forecast Cubit (factory to allow multiple instances for different lands)
+  getIt.registerFactory<WeatherForecastCubit>(
+    () => WeatherForecastCubit(getIt<WeatherForecastApiService>()),
   );
 }

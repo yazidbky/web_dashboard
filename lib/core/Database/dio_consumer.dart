@@ -80,6 +80,8 @@ class DioConsumer implements ApiConsumer {
     print('Base URL: ${dio.options.baseUrl}');
     print('Full URL: ${dio.options.baseUrl}$path');
     print('Is Form Data: $isFormData');
+    print('Request Data: $data');
+    print('Data Type: ${data.runtimeType}');
 
     try {
       dynamic requestData = data;
@@ -97,6 +99,9 @@ class DioConsumer implements ApiConsumer {
             ? Options(contentType: 'multipart/form-data')
             : null,
       );
+      print('=== DIO CONSUMER POST SUCCESS ===');
+      print('Response Status: ${response.statusCode}');
+      print('Response Data: ${response.data}');
       return response.data;
     } on DioException catch (error) {
       print('=== DIO CONSUMER POST ERROR ===');

@@ -22,6 +22,9 @@ import 'package:web_dashboard/features/Farmers/Get%20Farmer%20Lands/Logic/farmer
 import 'package:web_dashboard/features/Farmers/Get%20Farmer%20Lands/Logic/farmer_lands_state.dart';
 import 'package:web_dashboard/features/Historical%20Weather%20Data/Logic/weather_cubit.dart';
 import 'package:web_dashboard/core/DI/dependency_injection.dart';
+import 'package:web_dashboard/features/Farmers/Farmers%20Disconnect/Logic/disconnect_farmer_cubit.dart';
+import 'package:web_dashboard/features/Farmers/Farmers%20Disconnect/Logic/disconnect_farmer_state.dart';
+import 'package:web_dashboard/core/widgets/confirmation_dialog.dart';
 
 class FarmersScreen extends StatefulWidget {
   const FarmersScreen({super.key});
@@ -34,6 +37,7 @@ class _FarmersScreenState extends State<FarmersScreen> {
   String? _selectedFarmer;
   FarmerTableData? _selectedFarmerData;
   StreamSubscription<FarmerLandsState>? _landsSubscription;
+  StreamSubscription<DisconnectFarmerState>? _disconnectSubscription;
 
   @override
   void initState() {
@@ -47,6 +51,7 @@ class _FarmersScreenState extends State<FarmersScreen> {
   @override
   void dispose() {
     _landsSubscription?.cancel();
+    _disconnectSubscription?.cancel();
     super.dispose();
   }
 
@@ -76,6 +81,76 @@ class _FarmersScreenState extends State<FarmersScreen> {
     setState(() {
       _selectedFarmerData = farmer;
     });
+  }
+
+  void _handleFarmerDisconnect(FarmerTableData farmer) async {
+    print('🔄 [FarmersScreen] Disconnect requested for farmer: ${farmer.farmerName} (ID: ${farmer.id})');
+    
+    // Show confirmation dialog
+    final confirmed = await ConfirmationDialog.showWarning(
+      context,
+      title: 'Disconnect Farmer',
+      description: 'Are you sure you want to disconnect from "${farmer.farmerName}"? This action cannot be undone.',
+      confirmText: 'Disconnect',
+      cancelText: 'Cancel',
+      icon: Icons.link_off,
+    );
+
+    if (confirmed == true && mounted) {
+      final farmerId = int.tryParse(farmer.id);
+      if (farmerId != null) {
+        // Cancel previous subscription if any
+        await _disconnectSubscription?.cancel();
+        
+        // Create disconnect cubit and disconnect
+        final disconnectCubit = getIt<DisconnectFarmerCubit>();
+        
+        // Listen to the cubit stream
+        _disconnectSubscription = disconnectCubit.stream.listen((state) {
+          if (!mounted) return;
+          
+          if (state is DisconnectFarmerSuccess) {
+            print('✅ [FarmersScreen] Farmer disconnected successfully');
+            // Show success message
+            showAppSnackBar(
+              context: context,
+              message: 'Farmer "${farmer.farmerName}" disconnected successfully',
+              icon: Icons.check_circle,
+              backgroundColor: AppColors.primary,
+              textColor: AppColors.white,
+              behavior: SnackBarBehavior.floating,
+            );
+            
+            // Refresh farmers list
+            context.read<MyFarmersCubit>().getMyFarmers();
+            
+            // Cancel subscription after success
+            _disconnectSubscription?.cancel();
+            _disconnectSubscription = null;
+          } else if (state is DisconnectFarmerFailure) {
+            print('❌ [FarmersScreen] Failed to disconnect farmer: ${state.failureMessage}');
+            // Show error message
+            showAppSnackBar(
+              context: context,
+              message: 'Failed to disconnect farmer: ${state.failureMessage}',
+              icon: Icons.error,
+              backgroundColor: AppColors.error,
+              textColor: AppColors.white,
+              behavior: SnackBarBehavior.floating,
+            );
+            
+            // Cancel subscription after failure
+            _disconnectSubscription?.cancel();
+            _disconnectSubscription = null;
+          }
+        });
+        
+        // Disconnect the farmer
+        await disconnectCubit.disconnectFarmer(farmerId);
+      } else {
+        print('❌ [FarmersScreen] Invalid farmer ID: ${farmer.id}');
+      }
+    }
   }
 
   @override
@@ -344,6 +419,7 @@ class _FarmersScreenState extends State<FarmersScreen> {
             FarmersTable(
               farmers: farmers,
               onFarmerSelected: _handleFarmerSelected,
+              onFarmerDisconnect: _handleFarmerDisconnect,
             ),
             SizedBox(height: SizeConfig.scaleHeight(2)),
             
@@ -373,30 +449,6 @@ class _FarmersScreenState extends State<FarmersScreen> {
           FarmersHeader(userName: userName),
           SizedBox(height: SizeConfig.scaleHeight(2.5)),
           
-          // Dropdown and Add button row
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Expanded(
-                flex: 2,
-                child: FarmerDropdown(
-                  label: 'Select farmer',
-                  subText: _selectedFarmer != null ? '$_selectedFarmer Soil status' : null,
-                  selectedValue: _selectedFarmer,
-                  items: farmerNames,
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedFarmer = value;
-                    });
-                  },
-                ),
-              ),
-              SizedBox(width: SizeConfig.scaleWidth(3)),
-              AddFarmerButton(onPressed: _handleAddFarmer),
-            ],
-          ),
-          SizedBox(height: SizeConfig.scaleHeight(2.5)),
-          
           // Content based on state
           if (farmersState is MyFarmersLoading)
             SizedBox(
@@ -418,20 +470,40 @@ class _FarmersScreenState extends State<FarmersScreen> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Table
+                // Left column - Dropdown and Table
                 Expanded(
                   flex: 2,
-                  child: FarmersTable(
-                    farmers: farmers,
-                    onFarmerSelected: _handleFarmerSelected,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Dropdown section - same width as table
+                      FarmerDropdown(
+                        label: 'Select farmer',
+                        subText: _selectedFarmer != null ? '$_selectedFarmer Soil status' : null,
+                        selectedValue: _selectedFarmer,
+                        items: farmerNames,
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedFarmer = value;
+                          });
+                        },
+                      ),
+                      SizedBox(height: SizeConfig.scaleHeight(2.5)),
+                      // Table
+                      FarmersTable(
+                        farmers: farmers,
+                        onFarmerSelected: _handleFarmerSelected,
+                        onFarmerDisconnect: _handleFarmerDisconnect,
+                      ),
+                    ],
                   ),
                 ),
                 SizedBox(width: SizeConfig.scaleWidth(3)),
-                // Summary
+                // Summary - taller
                 Expanded(
                   flex: 1,
                   child: SizedBox(
-                    height: SizeConfig.scaleHeight(40),
+                    height: SizeConfig.scaleHeight(60),
                     child: FarmerSummary(selectedFarmer: _selectedFarmerData),
                   ),
                 ),
@@ -458,28 +530,6 @@ class _FarmersScreenState extends State<FarmersScreen> {
           _buildDesktopHeader(userName),
           SizedBox(height: SizeConfig.scaleHeight(1.5)),
           
-          // Dropdown section
-          Padding(
-            padding: EdgeInsets.only(
-              left: SizeConfig.responsive(mobile: 3, tablet: 4, desktop: 5),
-            ),
-            child: SizedBox(
-              width: SizeConfig.scaleWidth(25),
-              child: FarmerDropdown(
-                label: 'Select farmer',
-                subText: _selectedFarmer != null ? '$_selectedFarmer Soil status' : null,
-                selectedValue: _selectedFarmer,
-                items: farmerNames,
-                onChanged: (value) {
-                  setState(() {
-                    _selectedFarmer = value;
-                  });
-                },
-              ),
-            ),
-          ),
-          SizedBox(height: SizeConfig.scaleHeight(2.5)),
-          
           // Content based on state
           if (farmersState is MyFarmersLoading)
             SizedBox(
@@ -501,20 +551,45 @@ class _FarmersScreenState extends State<FarmersScreen> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Table
+                // Left column - Dropdown and Table
                 Expanded(
                   flex: 2,
-                  child: FarmersTable(
-                    farmers: farmers,
-                    onFarmerSelected: _handleFarmerSelected,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Dropdown section - same width as table
+                      Padding(
+                        padding: EdgeInsets.only(
+                          left: SizeConfig.responsive(mobile: 3, tablet: 4, desktop: 5),
+                        ),
+                        child: FarmerDropdown(
+                          label: 'Select farmer',
+                          subText: _selectedFarmer != null ? '$_selectedFarmer Soil status' : null,
+                          selectedValue: _selectedFarmer,
+                          items: farmerNames,
+                          onChanged: (value) {
+                            setState(() {
+                              _selectedFarmer = value;
+                            });
+                          },
+                        ),
+                      ),
+                      SizedBox(height: SizeConfig.scaleHeight(2.5)),
+                      // Table
+                      FarmersTable(
+                        farmers: farmers,
+                        onFarmerSelected: _handleFarmerSelected,
+                        onFarmerDisconnect: _handleFarmerDisconnect,
+                      ),
+                    ],
                   ),
                 ),
                 SizedBox(width: SizeConfig.scaleWidth(3)),
-                // Summary
+                // Summary - taller
                 Expanded(
                   flex: 1,
                   child: SizedBox(
-                    height: SizeConfig.scaleHeight(50),
+                    height: SizeConfig.scaleHeight(70),
                     child: FarmerSummary(selectedFarmer: _selectedFarmerData),
                   ),
                 ),
@@ -562,42 +637,38 @@ class _FarmersScreenState extends State<FarmersScreen> {
             ],
           ),
           
-          // Right side - Profile on top, Add button below
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
+          // Right side - Profile and Add button aligned with welcome text
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // User profile row
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: SizeConfig.scaleWidth(5),
-                    height: SizeConfig.scaleWidth(5),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: AppColors.primary,
-                      border: Border.all(
-                        color: AppColors.white,
-                        width: 2,
-                      ),
-                    ),
-                    child: Icon(
-                      Icons.person,
-                      color: AppColors.white,
-                      size: SizeConfig.scaleWidth(3),
-                    ),
+              // User profile
+              Container(
+                width: SizeConfig.scaleWidth(5),
+                height: SizeConfig.scaleWidth(5),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.primary,
+                  border: Border.all(
+                    color: AppColors.white,
+                    width: 2,
                   ),
-                  SizedBox(width: SizeConfig.scaleWidth(1)),
-                  CustomText(
-                    userName,
-                    fontSize: SizeConfig.responsive(mobile: 14, tablet: 16, desktop: 18),
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.black,
-                  ),
-                ],
+                ),
+                child: Icon(
+                  Icons.person,
+                  color: AppColors.white,
+                  size: SizeConfig.scaleWidth(3),
+                ),
               ),
-              SizedBox(height: SizeConfig.scaleHeight(1.5)),
-              // Add farmer button below profile
+              SizedBox(width: SizeConfig.scaleWidth(1)),
+              CustomText(
+                userName,
+                fontSize: SizeConfig.responsive(mobile: 14, tablet: 16, desktop: 18),
+                fontWeight: FontWeight.w600,
+                color: AppColors.black,
+              ),
+              SizedBox(width: SizeConfig.scaleWidth(2)),
+              // Add farmer button aligned with welcome text
               AddFarmerButton(onPressed: _handleAddFarmer),
             ],
           ),

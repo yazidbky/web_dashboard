@@ -99,7 +99,7 @@ class WeatherHeader extends StatelessWidget {
                         child: _buildDropdown(
                           'Select farmer',
                           selectedFarmer,
-                          farmers.isNotEmpty ? farmers : [selectedFarmer],
+                          farmers,
                           onFarmerChanged,
                         ),
                       ),
@@ -157,7 +157,7 @@ class WeatherHeader extends StatelessWidget {
                 _buildDropdown(
                   'Select farmer',
                   selectedFarmer,
-                  farmers.isNotEmpty ? farmers : [selectedFarmer],
+                  farmers,
                   onFarmerChanged,
                 ),
               ],
@@ -174,6 +174,10 @@ class WeatherHeader extends StatelessWidget {
     List<String> items,
     Function(String)? onChanged,
   ) {
+    // Ensure value exists in items list, or use null (which shows hint)
+    // This prevents the dropdown assertion error
+    final validValue = items.isNotEmpty && items.contains(value) ? value : null;
+    
     return ConstrainedBox(
       constraints: BoxConstraints(
         minWidth: SizeConfig.responsive(mobile: 80, tablet: 100, desktop: 120),
@@ -192,7 +196,18 @@ class WeatherHeader extends StatelessWidget {
           border: Border.all(color: AppColors.grey300, width: 1),
         ),
         child: DropdownButton<String>(
-          value: value,
+          value: validValue,
+          hint: items.isEmpty 
+              ? CustomText(
+                  'No farmers',
+                  fontSize: SizeConfig.responsive(mobile: 11, tablet: 12, desktop: 13),
+                  color: AppColors.grey500,
+                )
+              : CustomText(
+                  'Select farmer',
+                  fontSize: SizeConfig.responsive(mobile: 11, tablet: 12, desktop: 13),
+                  color: AppColors.grey500,
+                ),
           underline: const SizedBox(),
           isDense: true,
           isExpanded: true,

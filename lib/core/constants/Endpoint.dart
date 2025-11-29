@@ -12,6 +12,16 @@ class Endpoints {
 
   // Weather endpoints
   static const weatherFetchAndSaveEndPoint = "/api/weather/fetch-and-save";
+  
+  // Get today's weather endpoint
+  /// GET /api/weather/today/{landId}
+  static String getTodayWeatherEndPoint(int landId) =>
+      "/api/weather/today/$landId";
+  
+  // Get weather forecast (3 days) endpoint
+  /// GET /api/weather/forecast/{landId}
+  static String getWeatherForecastEndPoint(int landId) =>
+      "/api/weather/forecast/$landId";
 
   // Soil data endpoints
   /// GET /api/soil/{farmerId}/{landId}/{section}
@@ -32,4 +42,9 @@ class Endpoints {
   /// GET /api/farmers/{farmerId}/lands
   static String getFarmerLandsEndPoint(int farmerId) =>
       "/api/farmers/$farmerId/lands";
+
+  // Farmers disconnect endpoint
+  /// DELETE /api/farmers/disconnect/{farmerId}
+  static String disconnectFarmerEndPoint(int farmerId) =>
+      "/api/farmers/disconnect/$farmerId";
 }
