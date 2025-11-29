@@ -7,6 +7,7 @@ class SoilStatusHeader extends StatelessWidget {
   final String userName;
   final String? userImagePath;
   final String selectedFarmer;
+  final List<String> farmers;
   final Function(String)? onFarmerChanged;
   final Function(String)? onLandChanged;
   final Function(String)? onAreaChanged;
@@ -16,6 +17,7 @@ class SoilStatusHeader extends StatelessWidget {
     required this.userName,
     this.userImagePath,
     required this.selectedFarmer,
+    this.farmers = const [],
     this.onFarmerChanged,
     this.onLandChanged,
     this.onAreaChanged,
@@ -101,7 +103,7 @@ class SoilStatusHeader extends StatelessWidget {
                         child: _buildDropdown(
                           'Select farmer',
                           selectedFarmer,
-                          ['Taha laib', 'yazid bakai', 'Chaba heytem'],
+                          farmers.isNotEmpty ? farmers : [selectedFarmer],
                           onFarmerChanged,
                         ),
                       ),
@@ -179,7 +181,7 @@ class SoilStatusHeader extends StatelessWidget {
                 _buildDropdown(
                   'Select farmer',
                   selectedFarmer,
-                  ['Taha laib', 'yazid bakai', 'Chaba heytem'],
+                  farmers.isNotEmpty ? farmers : [selectedFarmer],
                   onFarmerChanged,
                 ),
                 _buildDropdown(

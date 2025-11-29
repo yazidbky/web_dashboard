@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:web_dashboard/core/widgets/size_config.dart';
 import 'package:web_dashboard/core/theme/app_colors.dart';
 import 'package:web_dashboard/core/constants/app_assets.dart';
@@ -6,6 +7,10 @@ import 'package:web_dashboard/features/Soil Status/Presentation/widgets/soil_sta
 import 'package:web_dashboard/features/Soil Status/Presentation/widgets/soil_metric_card.dart';
 import 'package:web_dashboard/features/Soil Status/Presentation/widgets/soil_health_score.dart';
 import 'package:web_dashboard/features/Soil Status/Presentation/widgets/live_monitor_chart.dart';
+import 'package:web_dashboard/features/User%20Profile/Logic/user_cubit.dart';
+import 'package:web_dashboard/features/User%20Profile/Logic/user_state.dart';
+import 'package:web_dashboard/features/My%20Farmers/Logic/my_farmers_cubit.dart';
+import 'package:web_dashboard/features/My%20Farmers/Logic/my_farmers_state.dart';
 
 class SoilStatusScreen extends StatefulWidget {
   const SoilStatusScreen({super.key});
@@ -29,10 +34,34 @@ class _SoilStatusScreenState extends State<SoilStatusScreen> {
     final chartData = [8.0, 12.0, 15.0, 18.0, 22.0, 25.0, 28.0, 32.0, 35.0, 38.0, 40.0, 42.0];
     final chartLabels = ['11h', '10h', '9h', '8h', '7h', '6h', '5h', '4h', '3h', '2h', '1h', 'now'];
 
-    return _buildResponsiveLayout(
-      context,
-      chartData: chartData,
-      chartLabels: chartLabels,
+    return BlocBuilder<UserCubit, UserState>(
+      builder: (context, userState) {
+        final userName = userState is UserSuccess ? userState.userData.fullName : 'User';
+        return BlocBuilder<MyFarmersCubit, MyFarmersState>(
+          builder: (context, farmersState) {
+            final farmers = farmersState is MyFarmersSuccess
+                ? farmersState.farmers.map((f) => f.fullName).toList()
+                : <String>[];
+            
+            // Set initial farmer if not set and farmers available
+            if (farmers.isNotEmpty && !farmers.contains(selectedFarmer)) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) {
+                  setState(() => selectedFarmer = farmers.first);
+                }
+              });
+            }
+            
+            return _buildResponsiveLayout(
+              context,
+              chartData: chartData,
+              chartLabels: chartLabels,
+              userName: userName,
+              farmers: farmers,
+            );
+          },
+        );
+      },
     );
   }
 
@@ -40,19 +69,23 @@ class _SoilStatusScreenState extends State<SoilStatusScreen> {
     BuildContext context, {
     required List<double> chartData,
     required List<String> chartLabels,
+    required String userName,
+    required List<String> farmers,
   }) {
     if (SizeConfig.isMobile) {
-      return _buildMobileLayout(chartData, chartLabels);
+      return _buildMobileLayout(chartData, chartLabels, userName, farmers);
     } else if (SizeConfig.isTablet) {
-      return _buildTabletLayout(chartData, chartLabels);
+      return _buildTabletLayout(chartData, chartLabels, userName, farmers);
     } else {
-      return _buildDesktopLayout(chartData, chartLabels);
+      return _buildDesktopLayout(chartData, chartLabels, userName, farmers);
     }
   }
 
   Widget _buildMobileLayout(
     List<double> chartData,
     List<String> chartLabels,
+    String userName,
+    List<String> farmers,
   ) {
     return SingleChildScrollView(
       padding: SizeConfig.scalePadding(
@@ -63,8 +96,9 @@ class _SoilStatusScreenState extends State<SoilStatusScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           SoilStatusHeader(
-            userName: 'admin',
+            userName: userName,
             selectedFarmer: selectedFarmer,
+            farmers: farmers,
             onFarmerChanged: (value) => setState(() => selectedFarmer = value),
             onLandChanged: (value) => setState(() => selectedLand = value),
             onAreaChanged: (value) => setState(() => selectedArea = value),
@@ -97,6 +131,8 @@ class _SoilStatusScreenState extends State<SoilStatusScreen> {
   Widget _buildTabletLayout(
     List<double> chartData,
     List<String> chartLabels,
+    String userName,
+    List<String> farmers,
   ) {
     return SingleChildScrollView(
       padding: SizeConfig.scalePadding(
@@ -107,8 +143,9 @@ class _SoilStatusScreenState extends State<SoilStatusScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           SoilStatusHeader(
-            userName: 'admin',
+            userName: userName,
             selectedFarmer: selectedFarmer,
+            farmers: farmers,
             onFarmerChanged: (value) => setState(() => selectedFarmer = value),
             onLandChanged: (value) => setState(() => selectedLand = value),
             onAreaChanged: (value) => setState(() => selectedArea = value),
@@ -152,6 +189,8 @@ class _SoilStatusScreenState extends State<SoilStatusScreen> {
   Widget _buildDesktopLayout(
     List<double> chartData,
     List<String> chartLabels,
+    String userName,
+    List<String> farmers,
   ) {
     return SingleChildScrollView(
       padding: SizeConfig.scalePadding(
@@ -162,8 +201,9 @@ class _SoilStatusScreenState extends State<SoilStatusScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           SoilStatusHeader(
-            userName: 'Taha Laib',
+            userName: userName,
             selectedFarmer: selectedFarmer,
+            farmers: farmers,
             onFarmerChanged: (value) => setState(() => selectedFarmer = value),
             onLandChanged: (value) => setState(() => selectedLand = value),
             onAreaChanged: (value) => setState(() => selectedArea = value),

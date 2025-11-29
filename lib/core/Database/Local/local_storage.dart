@@ -19,6 +19,7 @@ class LocalStorage {
   static const String _userEmailKey = 'user_email';
   static const String _twoFactorAuthKey = 'two_factor_auth_enabled';
   static const String _rememberMeKey = 'remember_me_enabled';
+  static const String _fcmTokenKey = 'fcm_token';
 
   // Secure storage methods for tokens
   static Future<void> setSecureData(String key, String value) async {
@@ -196,6 +197,19 @@ class LocalStorage {
     return await getSecureData(_userEmailKey);
   }
 
+  // FCM Token methods
+  static Future<void> storeFcmToken(String token) async {
+    await setSecureData(_fcmTokenKey, token);
+  }
+
+  static Future<String?> getFcmToken() async {
+    return await getSecureData(_fcmTokenKey);
+  }
+
+  static Future<void> clearFcmToken() async {
+    await removeSecureData(_fcmTokenKey);
+  }
+
   // Get all stored keys (for debugging)
   static Future<Map<String, String?>> getAllAuthData() async {
     return {
@@ -205,6 +219,15 @@ class LocalStorage {
       'refresh_expires_in': await getRefreshExpiresIn(),
       'user_id': await getUserId(),
       'user_email': await getUserEmail(),
+      'fcm_token': await getFcmToken(),
     };
+  }
+
+  // Complete logout - clear all data
+  static Future<void> logout() async {
+    await clearAuthTokens();
+    await clearFcmToken();
+    await clearSecuritySettings();
+    print('✅ Complete logout - all data cleared');
   }
 }

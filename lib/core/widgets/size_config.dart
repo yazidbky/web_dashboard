@@ -22,9 +22,9 @@ class SizeConfig {
   static bool _initialized = false;
 
   // Breakpoints (customizable)
-  static const double _mobileBreakpoint = 600.0;
+  static const double _mobileBreakpoint = 800.0;
   static const double _tabletBreakpoint = 1024.0;
-  static const double _desktopBreakpoint = 1440.0;
+  static const double _desktopBreakpoint = 21600;
 
   // Text-scaling limits
   static const double _maxTextScaleFactor = 1.5;

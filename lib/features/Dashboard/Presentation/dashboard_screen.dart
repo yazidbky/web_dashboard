@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:web_dashboard/core/widgets/size_config.dart';
 import 'package:web_dashboard/core/theme/app_colors.dart';
 import 'package:web_dashboard/features/Dashboard/Presentation/widgets/stat_card.dart';
 import 'package:web_dashboard/features/Dashboard/Presentation/widgets/farmer_data_table.dart';
-import 'package:web_dashboard/features/Dashboard/Presentation/widgets/soil_moisture_chart.dart';
 import 'package:web_dashboard/features/Dashboard/Presentation/widgets/dashboard_header.dart';
+import 'package:web_dashboard/features/User%20Profile/Logic/user_cubit.dart';
+import 'package:web_dashboard/features/User%20Profile/Logic/user_state.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -56,11 +58,17 @@ class DashboardScreen extends StatelessWidget {
     final chartData = [5.0, 8.0, 12.0, 15.0, 18.0, 22.0, 25.0, 28.0, 32.0, 35.0, 38.0, 42.0];
     final chartLabels = ['11h', '10h', '9h', '8h', '7h', '6h', '5h', '4h', '3h', '2h', '1h', 'now'];
 
-    return _buildResponsiveLayout(
-      context,
-      farmers: farmers,
-      chartData: chartData,
-      chartLabels: chartLabels,
+    return BlocBuilder<UserCubit, UserState>(
+      builder: (context, state) {
+        final userName = state is UserSuccess ? state.userData.fullName : 'User';
+        return _buildResponsiveLayout(
+          context,
+          farmers: farmers,
+          chartData: chartData,
+          chartLabels: chartLabels,
+          userName: userName,
+        );
+      },
     );
   }
 
@@ -69,13 +77,14 @@ class DashboardScreen extends StatelessWidget {
     required List<FarmerData> farmers,
     required List<double> chartData,
     required List<String> chartLabels,
+    required String userName,
   }) {
     if (SizeConfig.isMobile) {
-      return _buildMobileLayout(farmers, chartData, chartLabels);
+      return _buildMobileLayout(farmers, chartData, chartLabels, userName);
     } else if (SizeConfig.isTablet) {
-      return _buildTabletLayout(farmers, chartData, chartLabels);
+      return _buildTabletLayout(farmers, chartData, chartLabels, userName);
     } else {
-      return _buildDesktopLayout(farmers, chartData, chartLabels);
+      return _buildDesktopLayout(farmers, chartData, chartLabels, userName);
     }
   }
 
@@ -83,6 +92,7 @@ class DashboardScreen extends StatelessWidget {
     List<FarmerData> farmers,
     List<double> chartData,
     List<String> chartLabels,
+    String userName,
   ) {
     return SingleChildScrollView(
       padding: SizeConfig.scalePadding(
@@ -92,7 +102,7 @@ class DashboardScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          DashboardHeader(userName: 'admin'),
+          DashboardHeader(userName: userName),
           SizedBox(height: SizeConfig.scaleHeight(2)),
           _buildStatCardsMobile(),
           SizedBox(height: SizeConfig.scaleHeight(2)),
@@ -121,6 +131,7 @@ class DashboardScreen extends StatelessWidget {
     List<FarmerData> farmers,
     List<double> chartData,
     List<String> chartLabels,
+    String userName,
   ) {
     return SingleChildScrollView(
       padding: SizeConfig.scalePadding(
@@ -130,7 +141,7 @@ class DashboardScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          DashboardHeader(userName: 'admin'),
+          DashboardHeader(userName: userName),
           SizedBox(height: SizeConfig.scaleHeight(2.5)),
           _buildStatCardsTablet(),
           SizedBox(height: SizeConfig.scaleHeight(2.5)),
@@ -174,6 +185,7 @@ class DashboardScreen extends StatelessWidget {
     List<FarmerData> farmers,
     List<double> chartData,
     List<String> chartLabels,
+    String userName,
   ) {
     return SingleChildScrollView(
       padding: SizeConfig.scalePadding(
@@ -183,7 +195,7 @@ class DashboardScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          DashboardHeader(userName: 'Taha Laib'),
+          DashboardHeader(userName: userName),
           SizedBox(height: SizeConfig.scaleHeight(2.5)),
           _buildStatCardsDesktop(),
           SizedBox(height: SizeConfig.scaleHeight(2.5)),

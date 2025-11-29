@@ -16,25 +16,44 @@ void showAppSnackBar({
   EdgeInsetsGeometry? margin,
   Duration duration = const Duration(seconds: 3),
 }) {
-  ScaffoldMessenger.of(context).showSnackBar(
+  final scaffoldMessenger = ScaffoldMessenger.of(context);
+  final screenWidth = MediaQuery.of(context).size.width;
+  const snackbarMaxWidth = 400.0;
+  const topMargin = 16.0;
+  
+  // Calculate horizontal margins to center the snackbar
+  final horizontalMargin = screenWidth > snackbarMaxWidth
+      ? (screenWidth - snackbarMaxWidth) / 2
+      : 16.0;
+  
+  final defaultMargin = margin ?? EdgeInsets.only(
+    top: topMargin,
+    left: horizontalMargin,
+    right: horizontalMargin,
+  );
+  
+  scaffoldMessenger.showSnackBar(
     SnackBar(
-      content: AppSnackBarContent(
-        message: message,
-        icon: icon,
-        backgroundColor: backgroundColor,
-        textColor: textColor,
-        onAction: onAction,
-        actionLabel: actionLabel,
-        iconBackgroundColor: iconBackgroundColor,
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: snackbarMaxWidth),
+        child: AppSnackBarContent(
+          message: message,
+          icon: icon,
+          backgroundColor: backgroundColor,
+          textColor: textColor,
+          onAction: onAction,
+          actionLabel: actionLabel,
+          iconBackgroundColor: iconBackgroundColor,
+        ),
       ),
       backgroundColor: Colors.transparent,
-      behavior: behavior,
+      behavior: SnackBarBehavior.floating,
       elevation: 0,
       padding: EdgeInsets.zero,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(borderRadius),
       ),
-      margin: margin ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: defaultMargin,
       duration: duration,
     ),
   );

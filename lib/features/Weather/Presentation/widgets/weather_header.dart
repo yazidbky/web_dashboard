@@ -7,6 +7,7 @@ class WeatherHeader extends StatelessWidget {
   final String userName;
   final String? userImagePath;
   final String selectedFarmer;
+  final List<String> farmers;
   final Function(String)? onFarmerChanged;
 
   const WeatherHeader({
@@ -14,6 +15,7 @@ class WeatherHeader extends StatelessWidget {
     required this.userName,
     this.userImagePath,
     required this.selectedFarmer,
+    this.farmers = const [],
     this.onFarmerChanged,
   });
 
@@ -97,7 +99,7 @@ class WeatherHeader extends StatelessWidget {
                         child: _buildDropdown(
                           'Select farmer',
                           selectedFarmer,
-                          ['Taha laib', 'yazid bakai', 'Chaba heytem'],
+                          farmers.isNotEmpty ? farmers : [selectedFarmer],
                           onFarmerChanged,
                         ),
                       ),
@@ -155,7 +157,7 @@ class WeatherHeader extends StatelessWidget {
                 _buildDropdown(
                   'Select farmer',
                   selectedFarmer,
-                  ['Taha laib', 'yazid bakai', 'Chaba heytem'],
+                  farmers.isNotEmpty ? farmers : [selectedFarmer],
                   onFarmerChanged,
                 ),
               ],

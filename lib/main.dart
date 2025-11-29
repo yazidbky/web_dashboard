@@ -1,6 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:web_dashboard/firebase_options.dart';
 import 'package:web_dashboard/core/widgets/size_config.dart';
 import 'package:web_dashboard/core/theme/app_colors.dart';
+import 'package:web_dashboard/core/DI/dependency_injection.dart';
+import 'package:web_dashboard/core/services/fcm_service.dart';
+import 'package:web_dashboard/features/Auth/Presentation/login_screen.dart';
+import 'package:web_dashboard/features/Auth/Logic/login_cubit.dart';
+import 'package:web_dashboard/features/User%20Profile/Logic/user_cubit.dart';
+import 'package:web_dashboard/features/My%20Farmers/Logic/my_farmers_cubit.dart';
+import 'package:web_dashboard/features/Notifications/Logic/notification_cubit.dart';
 import 'package:web_dashboard/features/Crop/Presentation/crop_screen.dart';
 import 'package:web_dashboard/features/Dashboard/Presentation/dashboard_screen.dart';
 import 'package:web_dashboard/features/Farmers/Presentation/farmers_screen.dart';
@@ -8,37 +18,76 @@ import 'package:web_dashboard/features/Soil%20Status/Presentation/soil_status_sc
 import 'package:web_dashboard/features/Weather/Presentation/weather_screen.dart';
 import 'package:web_dashboard/features/Home/side_bar.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Setup dependency injection first
+  setupDependencyInjection();
+  
+  // Initialize Firebase (optional - skip if not configured)
+  bool firebaseInitialized = false;
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    firebaseInitialized = true;
+    print('✅ Firebase initialized successfully');
+    
+    // Initialize FCM Service only if Firebase is initialized
+    await getIt<FCMService>().initialize();
+  } catch (e) {
+    print('⚠️ Firebase not configured: $e');
+    print('📝 Run "flutterfire configure" to setup Firebase');
+  }
+  
+  runApp(MyApp(firebaseInitialized: firebaseInitialized));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final bool firebaseInitialized;
+  
+  const MyApp({super.key, this.firebaseInitialized = false});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'AgriSense Dashboard',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
-        useMaterial3: true,
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (context) => getIt<LoginCubit>(),
+        ),
+        BlocProvider(
+          create: (context) => getIt<UserCubit>()..getUserProfile(),
+        ),
+        BlocProvider(
+          create: (context) => getIt<MyFarmersCubit>()..getMyFarmers(),
+        ),
+        BlocProvider(
+          create: (context) => getIt<NotificationCubit>(),
+        ),
+      ],
+      child: MaterialApp(
+        title: 'AgriSense Dashboard',
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
+          useMaterial3: true,
+        ),
+        builder: (context, child) {
+          SizeConfig.init(context);
+          return child ?? const SizedBox();
+        },
+        initialRoute: '/login',
+        onGenerateRoute: (settings) {
+          return PageRouteBuilder(
+            settings: settings,
+            pageBuilder: (context, animation, secondaryAnimation) {
+              return _getRouteWidget(settings.name ?? '/login');
+            },
+            transitionDuration: Duration.zero,
+            reverseTransitionDuration: Duration.zero,
+          );
+        },
+        debugShowCheckedModeBanner: false,
       ),
-      builder: (context, child) {
-        SizeConfig.init(context);
-        return child ?? const SizedBox();
-      },
-      initialRoute: '/dashboard',
-      onGenerateRoute: (settings) {
-        return PageRouteBuilder(
-          settings: settings,
-          pageBuilder: (context, animation, secondaryAnimation) {
-            return _getRouteWidget(settings.name ?? '/dashboard');
-          },
-          transitionDuration: Duration.zero,
-          reverseTransitionDuration: Duration.zero,
-        );
-      },
-      debugShowCheckedModeBanner: false,
     );
   }
 
@@ -100,6 +149,8 @@ class MyApp extends StatelessWidget {
 
   static Widget _getRouteWidget(String route) {
     switch (route) {
+      case '/login':
+        return const LoginScreen();
       case '/dashboard':
         return _buildWithSidebar(const DashboardScreen(), '/dashboard');
       case '/farmers':
@@ -111,7 +162,7 @@ class MyApp extends StatelessWidget {
       case '/crop':
         return _buildWithSidebar(const CropScreen(), '/crop');
       default:
-        return _buildWithSidebar(const DashboardScreen(), '/dashboard');
+        return const LoginScreen();
     }
   }
 }

@@ -25,7 +25,6 @@ class SoilMetricCard extends StatelessWidget {
     SizeConfig.init(context);
     
     // Create a lighter version of the background color
-    final lighterBackground = backgroundColor.withOpacity(0.3);
     
     return Container(
       padding: EdgeInsets.symmetric(

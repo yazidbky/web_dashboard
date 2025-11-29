@@ -41,5 +41,12 @@ static const String windy = 'assets/windy.png';
 static const String sunny = 'assets/sunny.png';
 static const String sunCloudy = 'assets/sun_cloudy.png';
 
+// crop assets
+static const String corn = 'assets/corn.png';
+
+
+
+
+
 
 }
