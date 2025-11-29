@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:web_dashboard/core/constants/app_assets.dart';
 import 'package:web_dashboard/core/theme/app_colors.dart';
 
 /// Enhanced CustomTextField with better performance, accessibility, and UX
@@ -389,16 +388,13 @@ class _CustomTextFieldState extends State<CustomTextField>
   // Obscure text toggle (password visibility)
   // Only show if obscureText is true AND showObscureToggle is true
   if (widget.obscureText && widget.showObscureToggle) {
-    final iconAsset = _isObscured 
-        ? (widget.obscureIcon ?? AppAssets.hide)
-        : (widget.visibleIcon ?? AppAssets.show);
-    
     return FadeTransition(
       opacity: _fadeAnimation,
       child: IconButton(
-        icon: _buildIconFromPath(
-          iconAsset,
+        icon: Icon(
+          _isObscured ? Icons.visibility_off_outlined : Icons.visibility_outlined,
           color: isDisabled ? AppColors.grey400 : AppColors.grey600,
+          size: 20,
         ),
         onPressed: isDisabled ? null : _toggleObscureText,
         padding: EdgeInsets.zero,
