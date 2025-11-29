@@ -7,7 +7,11 @@ class SoilStatusHeader extends StatelessWidget {
   final String userName;
   final String? userImagePath;
   final String selectedFarmer;
+  final String selectedLand;
+  final String selectedArea;
   final List<String> farmers;
+  final List<String> lands;
+  final List<String> areas;
   final Function(String)? onFarmerChanged;
   final Function(String)? onLandChanged;
   final Function(String)? onAreaChanged;
@@ -17,7 +21,11 @@ class SoilStatusHeader extends StatelessWidget {
     required this.userName,
     this.userImagePath,
     required this.selectedFarmer,
+    required this.selectedLand,
+    required this.selectedArea,
     this.farmers = const [],
+    this.lands = const ['Land 1', 'Land 2', 'Land 3'],
+    this.areas = const ['Area 1', 'Area 2', 'Area 3'],
     this.onFarmerChanged,
     this.onLandChanged,
     this.onAreaChanged,
@@ -111,8 +119,8 @@ class SoilStatusHeader extends StatelessWidget {
                       Flexible(
                         child: _buildDropdown(
                           'Select Land',
-                          'Land 1',
-                          ['Land 1', 'Land 2', 'Land 3'],
+                          selectedLand,
+                          lands,
                           onLandChanged,
                         ),
                       ),
@@ -120,8 +128,8 @@ class SoilStatusHeader extends StatelessWidget {
                       Flexible(
                         child: _buildDropdown(
                           'Select area',
-                          'Area 1',
-                          ['Area 1', 'Area 2', 'Area 3'],
+                          selectedArea,
+                          areas,
                           onAreaChanged,
                         ),
                       ),
@@ -186,14 +194,14 @@ class SoilStatusHeader extends StatelessWidget {
                 ),
                 _buildDropdown(
                   'Select Land',
-                  'Land 1',
-                  ['Land 1', 'Land 2', 'Land 3'],
+                  selectedLand,
+                  lands,
                   onLandChanged,
                 ),
                 _buildDropdown(
                   'Select area',
-                  'Area 1',
-                  ['Area 1', 'Area 2', 'Area 3'],
+                  selectedArea,
+                  areas,
                   onAreaChanged,
                 ),
               ],
@@ -210,6 +218,10 @@ class SoilStatusHeader extends StatelessWidget {
     List<String> items,
     Function(String)? onChanged,
   ) {
+    // Ensure the value exists in items, otherwise use the first item
+    final safeValue = items.contains(value) ? value : (items.isNotEmpty ? items.first : value);
+    final safeItems = items.isNotEmpty ? items : [value];
+    
     return ConstrainedBox(
       constraints: BoxConstraints(
         minWidth: SizeConfig.responsive(mobile: 80, tablet: 100, desktop: 120),
@@ -228,7 +240,7 @@ class SoilStatusHeader extends StatelessWidget {
           border: Border.all(color: AppColors.grey300, width: 1),
         ),
         child: DropdownButton<String>(
-          value: value,
+          value: safeValue,
           underline: const SizedBox(),
           isDense: true,
           isExpanded: true,
@@ -238,7 +250,7 @@ class SoilStatusHeader extends StatelessWidget {
             size: SizeConfig.responsive(mobile: 20, tablet: 22, desktop: 24),
           ),
           iconSize: SizeConfig.responsive(mobile: 20, tablet: 22, desktop: 24),
-          items: items.map((String item) {
+          items: safeItems.map((String item) {
             return DropdownMenuItem<String>(
               value: item,
               child: CustomText(
@@ -251,11 +263,11 @@ class SoilStatusHeader extends StatelessWidget {
             );
           }).toList(),
           selectedItemBuilder: (BuildContext context) {
-            return items.map((String item) {
+            return safeItems.map((String item) {
               return Align(
                 alignment: Alignment.centerLeft,
                 child: CustomText(
-                  item == value ? item : '',
+                  item == safeValue ? item : '',
                   fontSize: SizeConfig.responsive(mobile: 11, tablet: 12, desktop: 13),
                   color: AppColors.black,
                   maxLines: 1,
@@ -274,4 +286,3 @@ class SoilStatusHeader extends StatelessWidget {
     );
   }
 }
-

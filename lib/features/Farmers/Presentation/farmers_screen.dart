@@ -13,6 +13,8 @@ import 'package:web_dashboard/features/Farmers/Presentation/widgets/add_farmer_d
 import 'package:web_dashboard/features/Farmers/Presentation/widgets/add_farmer_button.dart';
 import 'package:web_dashboard/features/User%20Profile/Logic/user_cubit.dart';
 import 'package:web_dashboard/features/User%20Profile/Logic/user_state.dart';
+import 'package:web_dashboard/features/My%20Farmers/Logic/my_farmers_cubit.dart';
+import 'package:web_dashboard/features/My%20Farmers/Logic/my_farmers_state.dart';
 
 class FarmersScreen extends StatefulWidget {
   const FarmersScreen({super.key});
@@ -24,37 +26,22 @@ class FarmersScreen extends StatefulWidget {
 class _FarmersScreenState extends State<FarmersScreen> {
   String? _selectedFarmer;
   FarmerTableData? _selectedFarmerData;
-  
-  // Sample data - replace with actual data from API
-  List<FarmerTableData> _farmers = [
-    FarmerTableData(id: '1', farmerName: 'taha laib', cropType: 'Corn', lastActivity: '11/10/2025'),
-    FarmerTableData(id: '2', farmerName: 'taha laib', cropType: 'Wheat', lastActivity: '11/10/2025'),
-    FarmerTableData(id: '3', farmerName: 'taha laib', cropType: 'Soybean', lastActivity: '11/10/2025'),
-    FarmerTableData(id: '4', farmerName: 'taha laib', cropType: 'Potato', lastActivity: '11/10/2025'),
-    FarmerTableData(id: '5', farmerName: 'taha laib', cropType: 'Barley', lastActivity: '11/10/2025'),
-    FarmerTableData(id: '6', farmerName: 'taha laib', cropType: 'Barley', lastActivity: '11/10/2025'),
-    FarmerTableData(id: '7', farmerName: 'taha laib', cropType: 'Barley', lastActivity: '11/10/2025'),
-    FarmerTableData(id: '8', farmerName: 'taha laib', cropType: 'Barley', lastActivity: '11/10/2025'),
-    FarmerTableData(id: '9', farmerName: 'taha laib', cropType: 'Barley', lastActivity: '11/10/2025'),
-  ];
+
+  @override
+  void initState() {
+    super.initState();
+    // Fetch farmers when screen loads
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<MyFarmersCubit>().getMyFarmers();
+    });
+  }
 
   void _handleAddFarmer() async {
     final result = await AddFarmerDialog.show(context);
     
     if (result != null && mounted) {
-      final now = DateTime.now();
-      final formattedDate = '${now.month.toString().padLeft(2, '0')}/${now.day.toString().padLeft(2, '0')}/${now.year}';
-      final newFarmer = FarmerTableData(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        farmerName: result['farmerName']!,
-        cropType: result['cropType']!,
-        lastActivity: formattedDate,
-      );
-      
-      setState(() {
-        _farmers = [..._farmers, newFarmer];
-      });
-      
+      // TODO: Implement API call to add farmer
+      // For now, just show success message and refresh the list
       showAppSnackBar(
         context: context,
         message: 'Farmer "${result['farmerName']}" added successfully',
@@ -63,6 +50,9 @@ class _FarmersScreenState extends State<FarmersScreen> {
         textColor: AppColors.white,
         behavior: SnackBarBehavior.floating,
       );
+      
+      // Refresh farmers list
+      context.read<MyFarmersCubit>().getMyFarmers();
     }
   }
 
@@ -80,26 +70,123 @@ class _FarmersScreenState extends State<FarmersScreen> {
       builder: (context, state) {
         final userName = state is UserSuccess ? state.userData.fullName : 'admin';
         
-        return _buildResponsiveLayout(
-          context,
-          userName: userName,
+        return BlocBuilder<MyFarmersCubit, MyFarmersState>(
+          builder: (context, farmersState) {
+            return _buildResponsiveLayout(
+              context,
+              userName: userName,
+              farmersState: farmersState,
+            );
+          },
         );
       },
     );
   }
 
-  Widget _buildResponsiveLayout(BuildContext context, {required String userName}) {
+  Widget _buildResponsiveLayout(
+    BuildContext context, {
+    required String userName,
+    required MyFarmersState farmersState,
+  }) {
     if (SizeConfig.isMobile) {
-      return _buildMobileLayout(userName);
+      return _buildMobileLayout(userName, farmersState);
     } else if (SizeConfig.isTablet) {
-      return _buildTabletLayout(userName);
+      return _buildTabletLayout(userName, farmersState);
     } else {
-      return _buildDesktopLayout(userName);
+      return _buildDesktopLayout(userName, farmersState);
     }
   }
 
-  Widget _buildMobileLayout(String userName) {
-    final farmerNames = _farmers.map((f) => f.farmerName).toSet().toList();
+  List<FarmerTableData> _getFarmersFromState(MyFarmersState state) {
+    if (state is MyFarmersSuccess) {
+      return state.farmers.map((farmer) => 
+        FarmerTableData.fromFarmerDataModel(farmer)
+      ).toList();
+    }
+    return [];
+  }
+
+  Widget _buildLoadingWidget() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const CircularProgressIndicator(),
+          SizedBox(height: SizeConfig.scaleHeight(2)),
+          CustomText(
+            'Loading farmers...',
+            fontSize: SizeConfig.responsive(mobile: 14, tablet: 16, desktop: 18),
+            color: AppColors.grey600,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorWidget(String message) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.error_outline,
+            size: SizeConfig.responsive(mobile: 48, tablet: 56, desktop: 64),
+            color: AppColors.error,
+          ),
+          SizedBox(height: SizeConfig.scaleHeight(2)),
+          CustomText(
+            message,
+            fontSize: SizeConfig.responsive(mobile: 14, tablet: 16, desktop: 18),
+            color: AppColors.error,
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: SizeConfig.scaleHeight(2)),
+          ElevatedButton(
+            onPressed: () => context.read<MyFarmersCubit>().getMyFarmers(),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+            ),
+            child: CustomText(
+              'Retry',
+              color: AppColors.white,
+              fontSize: SizeConfig.responsive(mobile: 14, tablet: 16, desktop: 18),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyWidget() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.people_outline,
+            size: SizeConfig.responsive(mobile: 48, tablet: 56, desktop: 64),
+            color: AppColors.grey400,
+          ),
+          SizedBox(height: SizeConfig.scaleHeight(2)),
+          CustomText(
+            'No farmers found',
+            fontSize: SizeConfig.responsive(mobile: 14, tablet: 16, desktop: 18),
+            color: AppColors.grey600,
+          ),
+          SizedBox(height: SizeConfig.scaleHeight(1)),
+          CustomText(
+            'Add your first farmer to get started',
+            fontSize: SizeConfig.responsive(mobile: 12, tablet: 14, desktop: 16),
+            color: AppColors.grey500,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileLayout(String userName, MyFarmersState farmersState) {
+    final farmers = _getFarmersFromState(farmersState);
+    final farmerNames = farmers.map((f) => f.farmerName).toSet().toList();
     
     return SingleChildScrollView(
       padding: SizeConfig.scalePadding(
@@ -134,25 +221,44 @@ class _FarmersScreenState extends State<FarmersScreen> {
           ),
           SizedBox(height: SizeConfig.scaleHeight(2)),
           
-          // Farmers table
-          FarmersTable(
-            farmers: _farmers,
-            onFarmerSelected: _handleFarmerSelected,
-          ),
-          SizedBox(height: SizeConfig.scaleHeight(2)),
-          
-          // Farmer summary
-          SizedBox(
-            height: SizeConfig.scaleHeight(30),
-            child: FarmerSummary(selectedFarmer: _selectedFarmerData),
-          ),
+          // Content based on state
+          if (farmersState is MyFarmersLoading)
+            SizedBox(
+              height: SizeConfig.scaleHeight(30),
+              child: _buildLoadingWidget(),
+            )
+          else if (farmersState is MyFarmersFailure)
+            SizedBox(
+              height: SizeConfig.scaleHeight(30),
+              child: _buildErrorWidget(farmersState.failureMessage),
+            )
+          else if (farmers.isEmpty)
+            SizedBox(
+              height: SizeConfig.scaleHeight(30),
+              child: _buildEmptyWidget(),
+            )
+          else ...[
+            // Farmers table
+            FarmersTable(
+              farmers: farmers,
+              onFarmerSelected: _handleFarmerSelected,
+            ),
+            SizedBox(height: SizeConfig.scaleHeight(2)),
+            
+            // Farmer summary
+            SizedBox(
+              height: SizeConfig.scaleHeight(30),
+              child: FarmerSummary(selectedFarmer: _selectedFarmerData),
+            ),
+          ],
         ],
       ),
     );
   }
 
-  Widget _buildTabletLayout(String userName) {
-    final farmerNames = _farmers.map((f) => f.farmerName).toSet().toList();
+  Widget _buildTabletLayout(String userName, MyFarmersState farmersState) {
+    final farmers = _getFarmersFromState(farmersState);
+    final farmerNames = farmers.map((f) => f.farmerName).toSet().toList();
     
     return SingleChildScrollView(
       padding: SizeConfig.scalePadding(
@@ -189,36 +295,54 @@ class _FarmersScreenState extends State<FarmersScreen> {
           ),
           SizedBox(height: SizeConfig.scaleHeight(2.5)),
           
-          // Main content row
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Table
-              Expanded(
-                flex: 2,
-                child: FarmersTable(
-                  farmers: _farmers,
-                  onFarmerSelected: _handleFarmerSelected,
+          // Content based on state
+          if (farmersState is MyFarmersLoading)
+            SizedBox(
+              height: SizeConfig.scaleHeight(40),
+              child: _buildLoadingWidget(),
+            )
+          else if (farmersState is MyFarmersFailure)
+            SizedBox(
+              height: SizeConfig.scaleHeight(40),
+              child: _buildErrorWidget(farmersState.failureMessage),
+            )
+          else if (farmers.isEmpty)
+            SizedBox(
+              height: SizeConfig.scaleHeight(40),
+              child: _buildEmptyWidget(),
+            )
+          else
+            // Main content row
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Table
+                Expanded(
+                  flex: 2,
+                  child: FarmersTable(
+                    farmers: farmers,
+                    onFarmerSelected: _handleFarmerSelected,
+                  ),
                 ),
-              ),
-              SizedBox(width: SizeConfig.scaleWidth(3)),
-              // Summary
-              Expanded(
-                flex: 1,
-                child: SizedBox(
-                  height: SizeConfig.scaleHeight(40),
-                  child: FarmerSummary(selectedFarmer: _selectedFarmerData),
+                SizedBox(width: SizeConfig.scaleWidth(3)),
+                // Summary
+                Expanded(
+                  flex: 1,
+                  child: SizedBox(
+                    height: SizeConfig.scaleHeight(40),
+                    child: FarmerSummary(selectedFarmer: _selectedFarmerData),
+                  ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
         ],
       ),
     );
   }
 
-  Widget _buildDesktopLayout(String userName) {
-    final farmerNames = _farmers.map((f) => f.farmerName).toSet().toList();
+  Widget _buildDesktopLayout(String userName, MyFarmersState farmersState) {
+    final farmers = _getFarmersFromState(farmersState);
+    final farmerNames = farmers.map((f) => f.farmerName).toSet().toList();
     
     return SingleChildScrollView(
       padding: SizeConfig.scalePadding(
@@ -254,29 +378,46 @@ class _FarmersScreenState extends State<FarmersScreen> {
           ),
           SizedBox(height: SizeConfig.scaleHeight(2.5)),
           
-          // Main content row - Table and Summary
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Table
-              Expanded(
-                flex: 2,
-                child: FarmersTable(
-                  farmers: _farmers,
-                  onFarmerSelected: _handleFarmerSelected,
+          // Content based on state
+          if (farmersState is MyFarmersLoading)
+            SizedBox(
+              height: SizeConfig.scaleHeight(50),
+              child: _buildLoadingWidget(),
+            )
+          else if (farmersState is MyFarmersFailure)
+            SizedBox(
+              height: SizeConfig.scaleHeight(50),
+              child: _buildErrorWidget(farmersState.failureMessage),
+            )
+          else if (farmers.isEmpty)
+            SizedBox(
+              height: SizeConfig.scaleHeight(50),
+              child: _buildEmptyWidget(),
+            )
+          else
+            // Main content row - Table and Summary
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Table
+                Expanded(
+                  flex: 2,
+                  child: FarmersTable(
+                    farmers: farmers,
+                    onFarmerSelected: _handleFarmerSelected,
+                  ),
                 ),
-              ),
-              SizedBox(width: SizeConfig.scaleWidth(3)),
-              // Summary
-              Expanded(
-                flex: 1,
-                child: SizedBox(
-                  height: SizeConfig.scaleHeight(50),
-                  child: FarmerSummary(selectedFarmer: _selectedFarmerData),
+                SizedBox(width: SizeConfig.scaleWidth(3)),
+                // Summary
+                Expanded(
+                  flex: 1,
+                  child: SizedBox(
+                    height: SizeConfig.scaleHeight(50),
+                    child: FarmerSummary(selectedFarmer: _selectedFarmerData),
+                  ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
         ],
       ),
     );
