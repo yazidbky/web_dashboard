@@ -1,5 +1,5 @@
-import 'package:web_dashboard/features/Weather Charts/Data/Models/Sub Models/weather_record_model.dart';
-import 'package:web_dashboard/features/Weather Charts/Data/Models/Sub Models/weather_error_detail_model.dart';
+import 'package:web_dashboard/features/Historical%20Weather%20Data/Data/Models/Sub%20Models/weather_record_model.dart';
+import 'package:web_dashboard/features/Historical%20Weather%20Data/Data/Models/Sub%20Models/weather_error_detail_model.dart';
 
 class WeatherDataModel {
   final int totalDays;

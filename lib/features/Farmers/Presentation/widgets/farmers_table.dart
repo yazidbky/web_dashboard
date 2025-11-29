@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:web_dashboard/core/widgets/custom_text.dart';
 import 'package:web_dashboard/core/widgets/size_config.dart';
 import 'package:web_dashboard/core/theme/app_colors.dart';
-import 'package:web_dashboard/features/Farmers/Data/Models/farmer_model.dart';
+import 'package:web_dashboard/features/Farmers/Presentation/widgets/farmer_table_model.dart';
 
 class FarmersTable extends StatelessWidget {
   final List<FarmerTableData> farmers;

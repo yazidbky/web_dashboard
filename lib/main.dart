@@ -12,11 +12,12 @@ import 'package:web_dashboard/features/Auth/Logic/login_cubit.dart';
 import 'package:web_dashboard/features/User%20Profile/Logic/user_cubit.dart';
 import 'package:web_dashboard/features/My%20Farmers/Logic/my_farmers_cubit.dart';
 import 'package:web_dashboard/features/Notifications/Logic/notification_cubit.dart';
+import 'package:web_dashboard/features/Dashboard/Logic/overview_cubit.dart';
+import 'package:web_dashboard/features/Farmers/Farmers%20Connect/Logic/connect_farmer_cubit.dart';
 import 'package:web_dashboard/features/Crop/Presentation/crop_screen.dart';
 import 'package:web_dashboard/features/Dashboard/Presentation/dashboard_screen.dart';
 import 'package:web_dashboard/features/Farmers/Presentation/farmers_screen.dart';
 import 'package:web_dashboard/features/Soil%20Status/Presentation/soil_status_screen.dart';
-import 'package:web_dashboard/features/Weather/Presentation/weather_screen.dart';
 import 'package:web_dashboard/features/Home/side_bar.dart';
 
 void main() async {
@@ -64,6 +65,12 @@ class MyApp extends StatelessWidget {
         ),
         BlocProvider(
           create: (context) => getIt<NotificationCubit>(),
+        ),
+        BlocProvider(
+          create: (context) => getIt<OverviewCubit>()..getOverview(),
+        ),
+        BlocProvider(
+          create: (context) => getIt<ConnectFarmerCubit>(),
         ),
       ],
       child: MaterialApp(

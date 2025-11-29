@@ -11,10 +11,18 @@ import 'package:web_dashboard/features/My%20Farmers/Data/Api/my_farmers_api_serv
 import 'package:web_dashboard/features/My%20Farmers/Logic/my_farmers_cubit.dart';
 import 'package:web_dashboard/features/Notifications/Data/Api/notification_api_service.dart';
 import 'package:web_dashboard/features/Notifications/Logic/notification_cubit.dart';
-import 'package:web_dashboard/features/Weather%20Charts/Data/Api/weather_api_service.dart';
-import 'package:web_dashboard/features/Weather%20Charts/Logic/weather_cubit.dart';
+import 'package:web_dashboard/features/Historical%20Weather%20Data/Data/Api/weather_api_service.dart';
+import 'package:web_dashboard/features/Historical%20Weather%20Data/Logic/weather_cubit.dart';
 import 'package:web_dashboard/features/Soil%20Status/Get%20soil%20data/Data/Api/soil_data_api_service.dart';
 import 'package:web_dashboard/features/Soil%20Status/Get%20soil%20data/Logic/soil_data_cubit.dart';
+import 'package:web_dashboard/features/Dashboard/Data/Api/overview_api_service.dart';
+import 'package:web_dashboard/features/Dashboard/Logic/overview_cubit.dart';
+import 'package:web_dashboard/features/Farmers/Farmers%20Connect/Data/Api/connect_farmer_api_service.dart';
+import 'package:web_dashboard/features/Farmers/Farmers%20Connect/Logic/connect_farmer_cubit.dart';
+import 'package:web_dashboard/features/Farmers/Get%20Farmer%20Lands/Data/Api/farmer_lands_api_service.dart';
+import 'package:web_dashboard/features/Farmers/Get%20Farmer%20Lands/Logic/farmer_lands_cubit.dart';
+import 'package:web_dashboard/features/Soil%20Status/Get%20All%20Soil%20Sections/Data/Api/soil_sections_api_service.dart';
+import 'package:web_dashboard/features/Soil%20Status/Get%20All%20Soil%20Sections/Logic/soil_sections_cubit.dart';
 
 
 final GetIt getIt = GetIt.instance;
@@ -99,5 +107,45 @@ void setupDependencyInjection() {
   // Soil Data Cubit (factory to allow multiple instances with different params)
   getIt.registerFactory<SoilDataCubit>(
     () => SoilDataCubit(getIt<SoilDataApiService>()),
+  );
+
+  // Dashboard Overview Services
+  getIt.registerLazySingleton<OverviewApiService>(
+    () => OverviewApiService(getIt<ApiConsumer>()),
+  );
+
+  // Dashboard Overview Cubit
+  getIt.registerLazySingleton<OverviewCubit>(
+    () => OverviewCubit(getIt<OverviewApiService>()),
+  );
+
+  // Connect Farmer Services
+  getIt.registerLazySingleton<ConnectFarmerApiService>(
+    () => ConnectFarmerApiService(getIt<ApiConsumer>()),
+  );
+
+  // Connect Farmer Cubit (factory to allow fresh state for each connection attempt)
+  getIt.registerFactory<ConnectFarmerCubit>(
+    () => ConnectFarmerCubit(getIt<ConnectFarmerApiService>()),
+  );
+
+  // Get Farmer Lands Services
+  getIt.registerLazySingleton<FarmerLandsApiService>(
+    () => FarmerLandsApiService(getIt<ApiConsumer>()),
+  );
+
+  // Get Farmer Lands Cubit (factory to allow multiple instances for different farmers)
+  getIt.registerFactory<FarmerLandsCubit>(
+    () => FarmerLandsCubit(getIt<FarmerLandsApiService>()),
+  );
+
+  // Get All Soil Sections Services
+  getIt.registerLazySingleton<SoilSectionsApiService>(
+    () => SoilSectionsApiService(getIt<ApiConsumer>()),
+  );
+
+  // Get All Soil Sections Cubit (factory to allow multiple instances for different farmer/land combinations)
+  getIt.registerFactory<SoilSectionsCubit>(
+    () => SoilSectionsCubit(getIt<SoilSectionsApiService>()),
   );
 }

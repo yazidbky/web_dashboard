@@ -277,7 +277,9 @@ class SoilStatusHeader extends StatelessWidget {
             }).toList();
           },
           onChanged: (String? newValue) {
-            if (newValue != null && onChanged != null) {
+            if (newValue != null && 
+                newValue != 'Loading...' && 
+                onChanged != null) {
               onChanged(newValue);
             }
           },

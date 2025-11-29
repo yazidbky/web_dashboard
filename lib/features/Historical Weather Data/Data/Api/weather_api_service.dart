@@ -1,7 +1,7 @@
 import 'package:web_dashboard/core/Database/api_consumer.dart';
 import 'package:web_dashboard/core/constants/Endpoint.dart';
-import 'package:web_dashboard/features/Weather Charts/Data/Models/weather_request_model.dart';
-import 'package:web_dashboard/features/Weather Charts/Data/Models/weather_response_model.dart';
+import 'package:web_dashboard/features/Historical%20Weather%20Data/Data/Models/weather_request_model.dart';
+import 'package:web_dashboard/features/Historical%20Weather%20Data/Data/Models/weather_response_model.dart';
 
 class WeatherApiService {
   final ApiConsumer apiConsumer;

@@ -16,6 +16,10 @@ import 'package:web_dashboard/features/My%20Farmers/Data/Models/Sub%20Models/far
 import 'package:web_dashboard/features/Soil%20Status/Get%20soil%20data/Logic/soil_data_cubit.dart';
 import 'package:web_dashboard/features/Soil%20Status/Get%20soil%20data/Logic/soil_data_state.dart';
 import 'package:web_dashboard/features/Soil%20Status/Get%20soil%20data/Data/Models/soil_data_model.dart';
+import 'package:web_dashboard/features/Farmers/Get%20Farmer%20Lands/Logic/farmer_lands_cubit.dart';
+import 'package:web_dashboard/features/Farmers/Get%20Farmer%20Lands/Logic/farmer_lands_state.dart';
+import 'package:web_dashboard/features/Soil%20Status/Get%20All%20Soil%20Sections/Logic/soil_sections_cubit.dart';
+import 'package:web_dashboard/features/Soil%20Status/Get%20All%20Soil%20Sections/Logic/soil_sections_state.dart';
 
 class SoilStatusScreen extends StatefulWidget {
   const SoilStatusScreen({super.key});
@@ -26,53 +30,71 @@ class SoilStatusScreen extends StatefulWidget {
 
 class _SoilStatusScreenState extends State<SoilStatusScreen> {
   late SoilDataCubit _soilDataCubit;
+  late FarmerLandsCubit _farmerLandsCubit;
+  late SoilSectionsCubit _soilSectionsCubit;
   
   // Selected values
   int? selectedFarmerId;
   String selectedFarmerName = '';
-  int selectedLandId = 1;
-  String selectedLand = 'Land 1';
-  String selectedArea = 'Area 1'; // This is the "section" in the API
+  int? selectedLandId;
+  String selectedLand = '';
+  String selectedArea = ''; // This is the "section" in the API
   String selectedDate = 'Today';
   String selectedKPI = 'Soil Moisture';
 
-  // Available options
-  final List<String> lands = ['Land 1', 'Land 2', 'Land 3'];
-  final List<String> areas = ['Area 1', 'Area 2', 'Area 3'];
+  // Dynamic options
+  List<int> landIds = [];
+  List<String> lands = [];
+  List<String> areas = [];
 
   @override
   void initState() {
     super.initState();
     _soilDataCubit = getIt<SoilDataCubit>();
+    _farmerLandsCubit = getIt<FarmerLandsCubit>();
+    _soilSectionsCubit = getIt<SoilSectionsCubit>();
   }
 
   @override
   void dispose() {
     _soilDataCubit.close();
+    _farmerLandsCubit.close();
+    _soilSectionsCubit.close();
     super.dispose();
   }
 
   void _fetchSoilData() {
-    if (selectedFarmerId != null) {
+    if (selectedFarmerId != null && selectedLandId != null && selectedArea.isNotEmpty) {
+      print('🔄 [SoilStatusScreen] Fetching soil data for farmer: $selectedFarmerId, land: $selectedLandId, section: $selectedArea');
       _soilDataCubit.getSoilData(
         farmerId: selectedFarmerId!,
-        landId: selectedLandId,
+        landId: selectedLandId!,
         section: selectedArea,
       );
     }
   }
 
-  int _getLandIdFromName(String landName) {
-    switch (landName) {
-      case 'Land 1':
-        return 1;
-      case 'Land 2':
-        return 2;
-      case 'Land 3':
-        return 3;
-      default:
-        return 1;
+  void _fetchFarmerLands(int farmerId) {
+    print('🔄 [SoilStatusScreen] Fetching lands for farmer ID: $farmerId');
+    _farmerLandsCubit.getFarmerLands(farmerId);
+  }
+
+  void _fetchSoilSections(int farmerId, int landId) {
+    print('🔄 [SoilStatusScreen] Fetching sections for farmer ID: $farmerId, land ID: $landId');
+    _soilSectionsCubit.getAllSoilSections(farmerId, landId);
+  }
+
+  String _getLandNameFromId(int landId) {
+    return 'Land $landId';
+  }
+
+  int? _getLandIdFromName(String landName) {
+    // Extract number from "Land X" format
+    final match = RegExp(r'Land (\d+)').firstMatch(landName);
+    if (match != null) {
+      return int.tryParse(match.group(1) ?? '');
     }
+    return null;
   }
 
   @override
@@ -83,45 +105,108 @@ class _SoilStatusScreenState extends State<SoilStatusScreen> {
     final chartData = [8.0, 12.0, 15.0, 18.0, 22.0, 25.0, 28.0, 32.0, 35.0, 38.0, 40.0, 42.0];
     final chartLabels = ['11h', '10h', '9h', '8h', '7h', '6h', '5h', '4h', '3h', '2h', '1h', 'now'];
 
-    return BlocProvider.value(
-      value: _soilDataCubit,
-      child: BlocBuilder<UserCubit, UserState>(
-        builder: (context, userState) {
-          final userName = userState is UserSuccess ? userState.userData.fullName : 'User';
-          return BlocBuilder<MyFarmersCubit, MyFarmersState>(
-            builder: (context, farmersState) {
-              final farmers = farmersState is MyFarmersSuccess
-                  ? farmersState.farmers
-                  : <FarmerDataModel>[];
-              
-              // Set initial farmer if not set and farmers available
-              if (farmers.isNotEmpty && selectedFarmerId == null) {
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (mounted) {
-                    setState(() {
-                      selectedFarmerId = farmers.first.id;
-                      selectedFarmerName = farmers.first.fullName;
-                    });
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider.value(value: _soilDataCubit),
+        BlocProvider.value(value: _farmerLandsCubit),
+        BlocProvider.value(value: _soilSectionsCubit),
+      ],
+      child: MultiBlocListener(
+        listeners: [
+          // Listen for lands fetched
+          BlocListener<FarmerLandsCubit, FarmerLandsState>(
+            listener: (context, state) {
+              if (state is FarmerLandsSuccess) {
+                print('✅ [SoilStatusScreen] Lands fetched: ${state.landIds}');
+                setState(() {
+                  landIds = state.landIds;
+                  lands = state.landIds.map((id) => _getLandNameFromId(id)).toList();
+                  
+                  // Auto-select first land if available
+                  if (lands.isNotEmpty && selectedLand.isEmpty) {
+                    selectedLand = lands.first;
+                    selectedLandId = landIds.first;
+                    // Fetch sections for this land
+                    if (selectedFarmerId != null) {
+                      _fetchSoilSections(selectedFarmerId!, selectedLandId!);
+                    }
+                  }
+                });
+              } else if (state is FarmerLandsFailure) {
+                print('❌ [SoilStatusScreen] Failed to fetch lands: ${state.failureMessage}');
+                setState(() {
+                  lands = [];
+                  landIds = [];
+                  selectedLand = '';
+                  selectedLandId = null;
+                });
+              }
+            },
+          ),
+          // Listen for sections fetched
+          BlocListener<SoilSectionsCubit, SoilSectionsState>(
+            listener: (context, state) {
+              if (state is SoilSectionsSuccess) {
+                print('✅ [SoilStatusScreen] Sections fetched: ${state.sections}');
+                setState(() {
+                  areas = state.sections;
+                  
+                  // Auto-select first section if available
+                  if (areas.isNotEmpty && selectedArea.isEmpty) {
+                    selectedArea = areas.first;
+                    // Fetch soil data
                     _fetchSoilData();
                   }
                 });
+              } else if (state is SoilSectionsFailure) {
+                print('❌ [SoilStatusScreen] Failed to fetch sections: ${state.failureMessage}');
+                setState(() {
+                  areas = [];
+                  selectedArea = '';
+                });
               }
-              
-              return BlocBuilder<SoilDataCubit, SoilDataState>(
-                builder: (context, soilState) {
-                  return _buildResponsiveLayout(
-                    context,
-                    chartData: chartData,
-                    chartLabels: chartLabels,
-                    userName: userName,
-                    farmers: farmers,
-                    soilState: soilState,
-                  );
-                },
-              );
             },
-          );
-        },
+          ),
+        ],
+        child: BlocBuilder<UserCubit, UserState>(
+          builder: (context, userState) {
+            final userName = userState is UserSuccess ? userState.userData.fullName : 'User';
+            return BlocBuilder<MyFarmersCubit, MyFarmersState>(
+              builder: (context, farmersState) {
+                final farmers = farmersState is MyFarmersSuccess
+                    ? farmersState.farmers
+                    : <FarmerDataModel>[];
+                
+                // Set initial farmer if not set and farmers available
+                if (farmers.isNotEmpty && selectedFarmerId == null) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted) {
+                      setState(() {
+                        selectedFarmerId = farmers.first.id;
+                        selectedFarmerName = farmers.first.fullName;
+                      });
+                      // Fetch lands for this farmer
+                      _fetchFarmerLands(selectedFarmerId!);
+                    }
+                  });
+                }
+                
+                return BlocBuilder<SoilDataCubit, SoilDataState>(
+                  builder: (context, soilState) {
+                    return _buildResponsiveLayout(
+                      context,
+                      chartData: chartData,
+                      chartLabels: chartLabels,
+                      userName: userName,
+                      farmers: farmers,
+                      soilState: soilState,
+                    );
+                  },
+                );
+              },
+            );
+          },
+        ),
       ),
     );
   }
@@ -160,32 +245,65 @@ class _SoilStatusScreenState extends State<SoilStatusScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          SoilStatusHeader(
-            userName: userName,
-            selectedFarmer: selectedFarmerName,
-            selectedLand: selectedLand,
-            selectedArea: selectedArea,
-            farmers: farmers.map((f) => f.fullName).toList(),
-            lands: lands,
-            areas: areas,
+          BlocBuilder<FarmerLandsCubit, FarmerLandsState>(
+            builder: (context, landsState) {
+              final isLoadingLands = landsState is FarmerLandsLoading;
+              final displayLands = isLoadingLands ? ['Loading...'] : lands;
+              
+              return BlocBuilder<SoilSectionsCubit, SoilSectionsState>(
+                builder: (context, sectionsState) {
+                  final isLoadingSections = sectionsState is SoilSectionsLoading;
+                  final displayAreas = isLoadingSections ? ['Loading...'] : areas;
+                  
+                  return SoilStatusHeader(
+                    userName: userName,
+                    selectedFarmer: selectedFarmerName,
+                    selectedLand: selectedLand,
+                    selectedArea: selectedArea,
+                    farmers: farmers.map((f) => f.fullName).toList(),
+                    lands: displayLands,
+                    areas: displayAreas,
             onFarmerChanged: (value) {
               final farmer = farmers.firstWhere((f) => f.fullName == value);
+              print('🔄 [SoilStatusScreen] Farmer changed to: ${farmer.fullName} (ID: ${farmer.id})');
               setState(() {
                 selectedFarmerId = farmer.id;
                 selectedFarmerName = farmer.fullName;
+                // Reset land and area when farmer changes
+                selectedLand = '';
+                selectedLandId = null;
+                selectedArea = '';
+                lands = [];
+                landIds = [];
+                areas = [];
               });
-              _fetchSoilData();
+              // Fetch lands for the new farmer
+              _fetchFarmerLands(farmer.id);
             },
             onLandChanged: (value) {
+              print('🔄 [SoilStatusScreen] Land changed to: $value');
+              final landId = _getLandIdFromName(value);
               setState(() {
                 selectedLand = value;
-                selectedLandId = _getLandIdFromName(value);
+                selectedLandId = landId;
+                // Reset area when land changes
+                selectedArea = '';
+                areas = [];
               });
-              _fetchSoilData();
+              // Fetch sections for the new land
+              if (selectedFarmerId != null && landId != null) {
+                _fetchSoilSections(selectedFarmerId!, landId);
+              }
             },
-            onAreaChanged: (value) {
-              setState(() => selectedArea = value);
-              _fetchSoilData();
+                    onAreaChanged: (value) {
+                      print('🔄 [SoilStatusScreen] Area (section) changed to: $value');
+                      setState(() => selectedArea = value);
+                      // Fetch soil data for the selected section
+                      _fetchSoilData();
+                    },
+                  );
+                },
+              );
             },
           ),
           SizedBox(height: SizeConfig.scaleHeight(2)),
@@ -243,32 +361,65 @@ class _SoilStatusScreenState extends State<SoilStatusScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          SoilStatusHeader(
-            userName: userName,
-            selectedFarmer: selectedFarmerName,
-            selectedLand: selectedLand,
-            selectedArea: selectedArea,
-            farmers: farmers.map((f) => f.fullName).toList(),
-            lands: lands,
-            areas: areas,
+          BlocBuilder<FarmerLandsCubit, FarmerLandsState>(
+            builder: (context, landsState) {
+              final isLoadingLands = landsState is FarmerLandsLoading;
+              final displayLands = isLoadingLands ? ['Loading...'] : lands;
+              
+              return BlocBuilder<SoilSectionsCubit, SoilSectionsState>(
+                builder: (context, sectionsState) {
+                  final isLoadingSections = sectionsState is SoilSectionsLoading;
+                  final displayAreas = isLoadingSections ? ['Loading...'] : areas;
+                  
+                  return SoilStatusHeader(
+                    userName: userName,
+                    selectedFarmer: selectedFarmerName,
+                    selectedLand: selectedLand,
+                    selectedArea: selectedArea,
+                    farmers: farmers.map((f) => f.fullName).toList(),
+                    lands: displayLands,
+                    areas: displayAreas,
             onFarmerChanged: (value) {
               final farmer = farmers.firstWhere((f) => f.fullName == value);
+              print('🔄 [SoilStatusScreen] Farmer changed to: ${farmer.fullName} (ID: ${farmer.id})');
               setState(() {
                 selectedFarmerId = farmer.id;
                 selectedFarmerName = farmer.fullName;
+                // Reset land and area when farmer changes
+                selectedLand = '';
+                selectedLandId = null;
+                selectedArea = '';
+                lands = [];
+                landIds = [];
+                areas = [];
               });
-              _fetchSoilData();
+              // Fetch lands for the new farmer
+              _fetchFarmerLands(farmer.id);
             },
             onLandChanged: (value) {
+              print('🔄 [SoilStatusScreen] Land changed to: $value');
+              final landId = _getLandIdFromName(value);
               setState(() {
                 selectedLand = value;
-                selectedLandId = _getLandIdFromName(value);
+                selectedLandId = landId;
+                // Reset area when land changes
+                selectedArea = '';
+                areas = [];
               });
-              _fetchSoilData();
+              // Fetch sections for the new land
+              if (selectedFarmerId != null && landId != null) {
+                _fetchSoilSections(selectedFarmerId!, landId);
+              }
             },
-            onAreaChanged: (value) {
-              setState(() => selectedArea = value);
-              _fetchSoilData();
+                    onAreaChanged: (value) {
+                      print('🔄 [SoilStatusScreen] Area (section) changed to: $value');
+                      setState(() => selectedArea = value);
+                      // Fetch soil data for the selected section
+                      _fetchSoilData();
+                    },
+                  );
+                },
+              );
             },
           ),
           SizedBox(height: SizeConfig.scaleHeight(2.5)),
@@ -337,32 +488,65 @@ class _SoilStatusScreenState extends State<SoilStatusScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          SoilStatusHeader(
-            userName: userName,
-            selectedFarmer: selectedFarmerName,
-            selectedLand: selectedLand,
-            selectedArea: selectedArea,
-            farmers: farmers.map((f) => f.fullName).toList(),
-            lands: lands,
-            areas: areas,
+          BlocBuilder<FarmerLandsCubit, FarmerLandsState>(
+            builder: (context, landsState) {
+              final isLoadingLands = landsState is FarmerLandsLoading;
+              final displayLands = isLoadingLands ? ['Loading...'] : lands;
+              
+              return BlocBuilder<SoilSectionsCubit, SoilSectionsState>(
+                builder: (context, sectionsState) {
+                  final isLoadingSections = sectionsState is SoilSectionsLoading;
+                  final displayAreas = isLoadingSections ? ['Loading...'] : areas;
+                  
+                  return SoilStatusHeader(
+                    userName: userName,
+                    selectedFarmer: selectedFarmerName,
+                    selectedLand: selectedLand,
+                    selectedArea: selectedArea,
+                    farmers: farmers.map((f) => f.fullName).toList(),
+                    lands: displayLands,
+                    areas: displayAreas,
             onFarmerChanged: (value) {
               final farmer = farmers.firstWhere((f) => f.fullName == value);
+              print('🔄 [SoilStatusScreen] Farmer changed to: ${farmer.fullName} (ID: ${farmer.id})');
               setState(() {
                 selectedFarmerId = farmer.id;
                 selectedFarmerName = farmer.fullName;
+                // Reset land and area when farmer changes
+                selectedLand = '';
+                selectedLandId = null;
+                selectedArea = '';
+                lands = [];
+                landIds = [];
+                areas = [];
               });
-              _fetchSoilData();
+              // Fetch lands for the new farmer
+              _fetchFarmerLands(farmer.id);
             },
             onLandChanged: (value) {
+              print('🔄 [SoilStatusScreen] Land changed to: $value');
+              final landId = _getLandIdFromName(value);
               setState(() {
                 selectedLand = value;
-                selectedLandId = _getLandIdFromName(value);
+                selectedLandId = landId;
+                // Reset area when land changes
+                selectedArea = '';
+                areas = [];
               });
-              _fetchSoilData();
+              // Fetch sections for the new land
+              if (selectedFarmerId != null && landId != null) {
+                _fetchSoilSections(selectedFarmerId!, landId);
+              }
             },
-            onAreaChanged: (value) {
-              setState(() => selectedArea = value);
-              _fetchSoilData();
+                    onAreaChanged: (value) {
+                      print('🔄 [SoilStatusScreen] Area (section) changed to: $value');
+                      setState(() => selectedArea = value);
+                      // Fetch soil data for the selected section
+                      _fetchSoilData();
+                    },
+                  );
+                },
+              );
             },
           ),
           SizedBox(height: SizeConfig.scaleHeight(3)),

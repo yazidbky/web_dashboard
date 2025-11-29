@@ -1,21 +1,22 @@
-import 'package:web_dashboard/features/Weather Charts/Data/Models/Sub Models/weather_data_model.dart';
-class WeatherResponseModel {
+import 'package:web_dashboard/features/Farmers/Get%20Farmer%20Lands/Data/Models/farmer_lands_data_model.dart';
+
+class FarmerLandsResponseModel {
   final int statusCode;
-  final WeatherDataModel data;
+  final FarmerLandsDataModel data;
   final String message;
   final bool success;
 
-  WeatherResponseModel({
+  FarmerLandsResponseModel({
     required this.statusCode,
     required this.data,
     required this.message,
     required this.success,
   });
 
-  factory WeatherResponseModel.fromJson(Map<String, dynamic> json) {
-    return WeatherResponseModel(
+  factory FarmerLandsResponseModel.fromJson(Map<String, dynamic> json) {
+    return FarmerLandsResponseModel(
       statusCode: json['statusCode'] ?? 0,
-      data: WeatherDataModel.fromJson(json['data'] ?? {}),
+      data: FarmerLandsDataModel.fromJson(json['data'] ?? {}),
       message: json['message'] ?? '',
       success: json['success'] ?? false,
     );

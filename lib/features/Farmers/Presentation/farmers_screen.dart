@@ -1,10 +1,11 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:web_dashboard/core/widgets/custom_text.dart';
 import 'package:web_dashboard/core/widgets/size_config.dart';
 import 'package:web_dashboard/core/theme/app_colors.dart';
 import 'package:web_dashboard/core/widgets/app_snack_bar.dart';
-import 'package:web_dashboard/features/Farmers/Data/Models/farmer_model.dart';
+import 'package:web_dashboard/features/Farmers/Presentation/widgets/farmer_table_model.dart';
 import 'package:web_dashboard/features/Farmers/Presentation/widgets/farmers_header.dart';
 import 'package:web_dashboard/features/Farmers/Presentation/widgets/farmers_table.dart';
 import 'package:web_dashboard/features/Farmers/Presentation/widgets/farmer_dropdown.dart';
@@ -15,6 +16,12 @@ import 'package:web_dashboard/features/User%20Profile/Logic/user_cubit.dart';
 import 'package:web_dashboard/features/User%20Profile/Logic/user_state.dart';
 import 'package:web_dashboard/features/My%20Farmers/Logic/my_farmers_cubit.dart';
 import 'package:web_dashboard/features/My%20Farmers/Logic/my_farmers_state.dart';
+import 'package:web_dashboard/features/Farmers/Farmers%20Connect/Logic/connect_farmer_cubit.dart';
+import 'package:web_dashboard/features/Farmers/Farmers%20Connect/Logic/connect_farmer_state.dart';
+import 'package:web_dashboard/features/Farmers/Get%20Farmer%20Lands/Logic/farmer_lands_cubit.dart';
+import 'package:web_dashboard/features/Farmers/Get%20Farmer%20Lands/Logic/farmer_lands_state.dart';
+import 'package:web_dashboard/features/Historical%20Weather%20Data/Logic/weather_cubit.dart';
+import 'package:web_dashboard/core/DI/dependency_injection.dart';
 
 class FarmersScreen extends StatefulWidget {
   const FarmersScreen({super.key});
@@ -26,6 +33,7 @@ class FarmersScreen extends StatefulWidget {
 class _FarmersScreenState extends State<FarmersScreen> {
   String? _selectedFarmer;
   FarmerTableData? _selectedFarmerData;
+  StreamSubscription<FarmerLandsState>? _landsSubscription;
 
   @override
   void initState() {
@@ -36,15 +44,23 @@ class _FarmersScreenState extends State<FarmersScreen> {
     });
   }
 
+  @override
+  void dispose() {
+    _landsSubscription?.cancel();
+    super.dispose();
+  }
+
   void _handleAddFarmer() async {
+    // Reset cubit state before opening dialog
+    context.read<ConnectFarmerCubit>().reset();
+    
     final result = await AddFarmerDialog.show(context);
     
-    if (result != null && mounted) {
-      // TODO: Implement API call to add farmer
-      // For now, just show success message and refresh the list
+    if (result == true && mounted) {
+      // Farmer connected successfully - show success message and refresh the list
       showAppSnackBar(
         context: context,
-        message: 'Farmer "${result['farmerName']}" added successfully',
+        message: 'Farmer connected successfully!',
         icon: Icons.check_circle,
         backgroundColor: AppColors.primary,
         textColor: AppColors.white,
@@ -66,21 +82,107 @@ class _FarmersScreenState extends State<FarmersScreen> {
   Widget build(BuildContext context) {
     SizeConfig.init(context);
     
-    return BlocBuilder<UserCubit, UserState>(
-      builder: (context, state) {
-        final userName = state is UserSuccess ? state.userData.fullName : 'admin';
-        
-        return BlocBuilder<MyFarmersCubit, MyFarmersState>(
-          builder: (context, farmersState) {
-            return _buildResponsiveLayout(
-              context,
-              userName: userName,
-              farmersState: farmersState,
-            );
-          },
-        );
+    return BlocListener<ConnectFarmerCubit, ConnectFarmerState>(
+      listener: (context, state) {
+        if (state is ConnectFarmerSuccess) {
+          print('FarmersScreen Farmer connected successfully!');
+          print('FarmersScreen Farmer ID: ${state.data.farmerId}');
+          print('FarmersScreen Farmer Name: ${state.data.farmer.fullName}');
+          
+          // Fetch lands for this farmer
+          _fetchFarmerLandsAndWeather(state.data.farmerId);
+        }
       },
+      child: BlocBuilder<UserCubit, UserState>(
+        builder: (context, state) {
+          final userName = state is UserSuccess ? state.userData.fullName : 'admin';
+          
+          return BlocBuilder<MyFarmersCubit, MyFarmersState>(
+            builder: (context, farmersState) {
+              return _buildResponsiveLayout(
+                context,
+                userName: userName,
+                farmersState: farmersState,
+              );
+            },
+          );
+        },
+      ),
     );
+  }
+
+  /// Fetches lands for a farmer and then weather data for each land
+  void _fetchFarmerLandsAndWeather(int farmerId) async {
+    if (!mounted) return;
+    
+    print('🔄 [FarmersScreen] Starting to fetch lands for farmer ID: $farmerId');
+    
+    // Cancel previous subscription if any
+    await _landsSubscription?.cancel();
+    
+    // Create a new instance of FarmerLandsCubit for this farmer
+    final farmerLandsCubit = getIt<FarmerLandsCubit>();
+    
+    // Listen to the cubit stream to handle the response
+    _landsSubscription = farmerLandsCubit.stream.listen((landsState) {
+      if (!mounted) return;
+      
+      if (landsState is FarmerLandsSuccess) {
+        print('FarmersScreen Lands fetched successfully!');
+        print('FarmersScreen Found ${landsState.landIds.length} land(s): ${landsState.landIds}');
+        
+        // Fetch weather data for each land
+        _fetchWeatherForLands(landsState.landIds);
+        
+        // Cancel subscription after success
+        _landsSubscription?.cancel();
+        _landsSubscription = null;
+      } else if (landsState is FarmerLandsFailure) {
+        print('❌ [FarmersScreen] Failed to fetch lands: ${landsState.failureMessage}');
+        
+        // Cancel subscription after failure
+        _landsSubscription?.cancel();
+        _landsSubscription = null;
+      }
+    });
+    
+    // Fetch lands
+    await farmerLandsCubit.getFarmerLands(farmerId);
+  }
+
+  /// Fetches weather data for each land ID
+  void _fetchWeatherForLands(List<int> landIds) {
+    if (!mounted) return;
+    
+    if (landIds.isEmpty) {
+      print('⚠️ [FarmersScreen] No lands found, skipping weather fetch');
+      return;
+    }
+
+    print('🔄 [FarmersScreen] Starting to fetch weather for ${landIds.length} land(s)');
+    
+    // Get the weather cubit (it's a singleton)
+    final weatherCubit = getIt<WeatherCubit>();
+    
+    // Fetch weather for each land sequentially with delays
+    for (int i = 0; i < landIds.length; i++) {
+      final landId = landIds[i];
+      print('FarmersScreen Scheduling weather fetch for land ID: $landId (${i + 1}/${landIds.length})');
+      
+      // Add a delay between requests to avoid overwhelming the API
+      Future.delayed(Duration(milliseconds: 500 * i), () {
+        if (!mounted) return;
+        
+        print('FarmersScreen] Fetching weather for land ID: $landId');
+        weatherCubit.fetchAndSaveWeather(landId).then((_) {
+          print('FarmersScreen] Weather fetch completed for land ID: $landId');
+        }).catchError((error) {
+          print('FarmersScreen] Error fetching weather for land ID $landId: $error');
+        });
+      });
+    }
+    
+    print('✅ [FarmersScreen] All weather fetch requests scheduled');
   }
 
   Widget _buildResponsiveLayout(

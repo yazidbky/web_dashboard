@@ -17,4 +17,19 @@ class Endpoints {
   /// GET /api/soil/{farmerId}/{landId}/{section}
   static String getSoilDataEndPoint(int farmerId, int landId, String section) =>
       "/api/soil/$farmerId/$landId/$section";
+  
+  /// GET /api/soil/{farmerId}/{landId}/sections
+  static String getAllSoilSectionsEndPoint(int farmerId, int landId) =>
+      "/api/soil/$farmerId/$landId/sections";
+
+  // Dashboard overview endpoint
+  static const overviewEndPoint = "/api/overview";
+
+  // Farmers connect endpoint
+  static const connectFarmerEndPoint = "/api/farmers/connect";
+
+  // Get farmer lands endpoint
+  /// GET /api/farmers/{farmerId}/lands
+  static String getFarmerLandsEndPoint(int farmerId) =>
+      "/api/farmers/$farmerId/lands";
 }
