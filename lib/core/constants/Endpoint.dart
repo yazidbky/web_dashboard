@@ -10,7 +10,11 @@ class Endpoints {
   static const getNotificationsEndPoint = "/api/notifications";
   static const markNotificationReadEndPoint = "/api/notifications/read";
 
+  // Weather endpoints
+  static const weatherFetchAndSaveEndPoint = "/api/weather/fetch-and-save";
 
-    static const weatherFetchAndSaveEndPoint = "/api/weather/fetch-and-save";
-
+  // Soil data endpoints
+  /// GET /api/soil/{farmerId}/{landId}/{section}
+  static String getSoilDataEndPoint(int farmerId, int landId, String section) =>
+      "/api/soil/$farmerId/$landId/$section";
 }

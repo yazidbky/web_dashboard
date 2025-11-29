@@ -13,6 +13,8 @@ import 'package:web_dashboard/features/Notifications/Data/Api/notification_api_s
 import 'package:web_dashboard/features/Notifications/Logic/notification_cubit.dart';
 import 'package:web_dashboard/features/Weather%20Charts/Data/Api/weather_api_service.dart';
 import 'package:web_dashboard/features/Weather%20Charts/Logic/weather_cubit.dart';
+import 'package:web_dashboard/features/Soil%20Status/Get%20soil%20data/Data/Api/soil_data_api_service.dart';
+import 'package:web_dashboard/features/Soil%20Status/Get%20soil%20data/Logic/soil_data_cubit.dart';
 
 
 final GetIt getIt = GetIt.instance;
@@ -87,5 +89,15 @@ void setupDependencyInjection() {
   // Weather Cubit
   getIt.registerLazySingleton<WeatherCubit>(
     () => WeatherCubit(getIt<WeatherApiService>()),
+  );
+
+  // Soil Data Services
+  getIt.registerLazySingleton<SoilDataApiService>(
+    () => SoilDataApiService(getIt<ApiConsumer>()),
+  );
+
+  // Soil Data Cubit (factory to allow multiple instances with different params)
+  getIt.registerFactory<SoilDataCubit>(
+    () => SoilDataCubit(getIt<SoilDataApiService>()),
   );
 }
